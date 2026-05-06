@@ -78,9 +78,8 @@ def a_pick_station(r1, data, i, *, layer_idx=0, dry_run=False, css_enabled=True,
     # changed from refill_all() or a previous pick in the same run)
     storage = WoodStorage()
 
-    # Get beam size from element. validate.py rejects elements without a
-    # valid beam_size before we get here; if the field is still missing,
-    # let storage.get_pick_frame() raise with a clear "Ungueltige Kategorie"
+    # Get beam size from element. If the field is missing or invalid, let
+    # storage.get_pick_frame() raise with a clear "Ungueltige Kategorie"
     # error rather than silently picking wrong stock.
     element = get_element(data, i, layer_idx=layer_idx)
     beam_size = element.get("beam_size", "").strip('"').strip("'")

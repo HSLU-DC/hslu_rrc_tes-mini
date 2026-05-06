@@ -52,7 +52,7 @@ from joint_positions import jp_cut
 storage = WoodStorage()
 
 # Duration in seconds for coordinated (track + robot) moves
-COORD_MOVE_TIME = 2
+COORD_MOVE_TIME = 1
 
 # Fixed track position for the cut station (mm)
 EXTAX_CUT = 500
@@ -175,9 +175,8 @@ def b_cut_station(r1, data, i, *, layer_idx=0, dry_run=False, saw_enabled=True, 
     cut_a_frame = element["cut_position_a"]
     cut_b_frame = element["cut_position_b"]
 
-    # Get beam size and track position from pick station. validate.py
-    # already enforces a valid beam_size; missing/unknown values surface
-    # as a "Unknown category" ValueError from storage.get_extax().
+    # Get beam size and track position from pick station. Missing/unknown
+    # values surface as a "Unknown category" ValueError from storage.get_extax().
     beam_size = element.get("beam_size", "").strip('"').strip("'")
     pick_extax = storage.get_extax(beam_size)
 

@@ -24,7 +24,7 @@ Die Daten werden als **Grasshopper DataTree** mit der Pfad-Struktur `{Layer;Elem
 
 Die **Reihenfolge der Elemente im Tree bestimmt die Reihenfolge**, in der der Roboter die Elemente platziert. Überlegt euch die Sequenz sorgfältig - ein Element kann nur dort platziert werden, wo es aufliegt.
 
-Jeder Branch enthält **5 bis 6 Einträge** (Glue Plane B ist optional):
+Jeder Branch im Haupt-Tree enthält **4 Einträge**:
 
 | Index | Name | Typ | Beschreibung |
 |-------|------|-----|-------------|
@@ -32,8 +32,8 @@ Jeder Branch enthält **5 bis 6 Einträge** (Glue Plane B ist optional):
 | 1 | Centerline | Line | Mittelachse des Balkens |
 | 2 | Cut Plane A | Plane | Schnittebene Ende A |
 | 3 | Cut Plane B | Plane | Schnittebene Ende B |
-| 4 | Glue Plane A | Plane | Leimebene 1 |
-| 5 | Glue Plane B | Plane | Leimebene 2 (optional) |
+
+**Leimebenen werden in einem zweiten DataTree** mit gleichem `{Layer;Element}`-Pfad geliefert. Pro Branch könnt ihr **0 bis beliebig viele** Leimebenen reingeben — die Reihenfolge im Branch ist die Reihenfolge in der der Roboter sie anfährt. Leerer Branch = der Roboter überspringt die Leimstation für dieses Element.
 
 <img src="docs/images/01_datatree.png" width="600">
 
@@ -163,19 +163,18 @@ Die RobotStudio-Simulation (siehe README, Workflow-Schritt 3) prüft zusätzlich
 
 ---
 
-## 5 - Glue Plane B (Leimebene 2, optional)
+## Weitere Leimebenen (optional, beliebig viele)
 
-Die zweite Leimebene am **anderen Ende / an einer anderen Auflagestelle** des Balkens. Identische Konvention wie Glue Plane A — inkl. der **90°-Regel bei innen liegender Plane** (>100mm vom Balkenende).
+Pro Element könnt ihr **0 bis beliebig viele** Leimebenen liefern. Identische Konvention wie Glue Plane A — inkl. der **90°-Regel bei innen liegender Plane** (>100mm vom Balkenende). Die Reihenfolge im Branch des Glue-Plane-DataTrees bestimmt die Anfahrtsreihenfolge.
 
-Glue Plane B ist **optional** und kann weggelassen werden, wenn der Balken nur an einer Stelle verleimt werden muss.
+**Wann brauche ich mehrere Leimebenen?**
+- Wenn der Balken an **mehreren Stellen** auf anderen Elementen oder dem Grundrahmen aufliegt (typisch bei Layer 1, oder bei langen Balken die mehrfach verleimt werden)
 
-**Wann brauche ich zwei Leimebenen?**
-- Wenn der Balken an **beiden Enden** auf einem anderen Element aufliegt (typisch bei Layer 1)
-- Wenn der Balken an **beiden Enden** auf dem Grundrahmen aufliegt
+**Wann reicht eine Leimebene oder gar keine?**
+- Eine: einseitige Fixierung
+- Keine: das Element wird ohne Leim gesetzt — der Roboter überspringt die ganze Leimstation
 
-**Wann reicht eine Leimebene?**
-- Wenn der Balken nur an **einem Ende** fixiert werden muss
-- Entscheidung liegt bei euch - überlegt was strukturell sinnvoll ist
+Entscheidung liegt bei euch - überlegt was strukturell sinnvoll ist.
 
 
 ---
@@ -186,8 +185,7 @@ Glue Plane B ist **optional** und kann weggelassen werden, wenn der Balken nur a
 |-------|---------|---------|---------|
 | Cut Plane A | nach aussen (weg vom Balken) | nach oben (Welt-Z) | ergibt sich |
 | Cut Plane B | nach aussen (weg vom Balken) | nach oben (Welt-Z) | ergibt sich |
-| Glue Plane A | nach unten | ergibt sich | Richtung Balkenmitte |
-| Glue Plane B | nach unten | ergibt sich | Richtung Balkenmitte |
+| Glue Plane (alle) | nach unten | ergibt sich | Richtung Balkenmitte |
 
 <img src="docs/images/06_uebersicht_alle_planes.png" width="600">
 
@@ -204,6 +202,6 @@ Glue Plane B ist **optional** und kann weggelassen werden, wenn der Balken nur a
 | Min Centerline-Länge | abhängig von Schnittwinkel — in GH-IK-Vorschau prüfen |
 | Maximale Anzahl Layer | 2 |
 | Schnitttyp | Nur Gehrungsschnitte (1D) |
-| Leimebenen pro Element | 1 - 2 |
+| Leimebenen pro Element | 0 - N (variable Anzahl, separater DataTree) |
 | Leimebenen-Position | beliebig entlang Balken; ab 100mm vom Ende muss die Plane um 90° um Z gedreht werden (Drehrichtung kollisionsfrei zur Einhausung wählen — siehe § 4) |
 | Platzierungsreihenfolge | = Reihenfolge im DataTree |

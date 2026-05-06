@@ -5,9 +5,11 @@ The glue system uses a Robatech hot-melt adhesive melter controlled via
 a Beckhoff PLC. A safety handshake (glue_on/glue_off) ensures the safety
 cell is closed before enabling the glue system.
 
-Each beam has 1-2 student-provided glue planes (glue_position_a, optional
-glue_position_b) on the top face where it will contact the beam above.
-The robot drives a predefined glue path pattern at each plane: a zigzag
+Each beam has 0..N student-provided glue positions (element["glue_positions"])
+on the top face where it will contact the beam above. The robot drives them
+in list order. Empty list = element is skipped entirely (no station entry).
+
+At each plane the robot drives a predefined glue path pattern: a zigzag
 fill of N parallel lines covering a 15x15 mm active area (5 mm margin
 on each side of the 25x25 mm beam top).
 
@@ -18,6 +20,7 @@ avoid Python-ROS-RAPID latency — this ensures consistent glue bead quality.
 # ==============================
 # Imports
 # ==============================
+import math
 import sys
 import os
 _parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -47,6 +50,13 @@ COORD_MOVE_TIME = 1
 # Helpers
 # ==============================================================================
 
+# Tolerance for treating two glue planes as identically oriented. If all three
+# axes (X, Y, Z) of plane B are within this many degrees of plane A's axes,
+# the robot can transit directly from A's retract to B's approach without
+# returning to jp_glue_rot for a safe reorientation.
+ORIENTATION_TOL_DEG = 2.0
+
+
 def _computed_zaxis(frame):
     """Robust z-axis: x cross y. Used for dry_run debug output."""
     z = frame.xaxis.cross(frame.yaxis)
@@ -55,28 +65,59 @@ def _computed_zaxis(frame):
     return z
 
 
+def _orientations_match(f1, f2, tol_deg=ORIENTATION_TOL_DEG):
+    """True if all three axes of f1 and f2 are parallel within tol_deg."""
+    cos_tol = math.cos(math.radians(tol_deg))
+    pairs = (
+        (f1.xaxis, f2.xaxis),
+        (f1.yaxis, f2.yaxis),
+        (f1.zaxis, f2.zaxis),
+    )
+    return all(a1.dot(a2) >= cos_tol for a1, a2 in pairs)
+
+
+def _glue_plan(glue_frames):
+    """Yield (frame, tag, enter_via_rot, exit_via_rot) per glue plane.
+
+    enter_via_rot: True if we need to come via jp_glue_rot to safely reorient
+                   the TCP to this plane (first plane, or orientation changed).
+    exit_via_rot:  True if we need to return to jp_glue_rot after this plane
+                   (last plane, or next plane has different orientation).
+    """
+    n = len(glue_frames)
+    prev = None
+    for idx, frame in enumerate(glue_frames, start=1):
+        is_last = (idx == n)
+        nxt = glue_frames[idx] if not is_last else None
+        enter_via_rot = (prev is None
+                         or not _orientations_match(prev, frame))
+        exit_via_rot = (is_last
+                        or not _orientations_match(frame, nxt))
+        yield frame, str(idx), enter_via_rot, exit_via_rot
+        prev = frame
+
+
 def _build_offset_frames(start_frame):
     """Build the intermediate helper frames around the glue start position.
 
     Returns:
-        pre: Pre-approach frame (Z+300, X+300, Y-50 from start)
-        app: Approach frame (Z+50, X+50, Y-50 from start)
-        ret: Retract frame (Z+100, X+100, Y-50 from start)
+        pre: Pre-approach frame (Z+300, X+300 from start) — unused at runtime,
+             only printed in dry_run for context.
+        app: Approach frame (Z+30, X+30 from start)
+        ret: Retract frame (Z+30, X+30 from start) — same as app to minimise
+             travel between consecutive direct-mode glue planes.
     """
     pre = start_frame.copy()
     pre.point.z += 300
     pre.point.x += 300
-    #pre.point.y -= 50
 
     app = start_frame.copy()
-    app.point.z += 50
-    app.point.x += 50
-    #app.point.y -= 50
+    app.point.z += 30
+    app.point.x += 30
 
     ret = start_frame.copy()
-    ret.point.z += 100
-    ret.point.x += 100
-    #ret.point.y -= 50
+    ret.point.z += 30
+    ret.point.x += 30
 
     return pre, app, ret
 
@@ -137,18 +178,25 @@ def _run_glue_line(r1, glue_frame, *, glue_valve_enabled=True,
 # Glue sequence
 # ==============================================================================
 
-def _do_glue_sequence(r1, glue_frame, *, dry_run=False, tag="", glue_valve_enabled=True):
-    """app -> start -> glue line -> ret -> jp_glue_rot.
-
-    Precondition: caller MUST position the robot at jp_glue_rot before calling.
-    Postcondition: robot is left at jp_glue_rot, ready for the next plane or exit.
+def _do_glue_sequence(r1, glue_frame, *, dry_run=False, tag="",
+                      glue_valve_enabled=True,
+                      enter_via_rot=True, exit_via_rot=True):
+    """[reorient at jp_glue_rot] -> app -> glue line -> ret -> [jp_glue_rot].
 
     Args:
         r1: AbbClient instance
         glue_frame: Start frame for the glue line
         dry_run: If True, prints planned moves only
-        tag: Label used in print statements ("A" or "B")
+        tag: Label used in print statements ("1", "2", ...)
         glue_valve_enabled: If True, opens/closes glue valve during path
+        enter_via_rot: True = robot is at jp_glue_rot, do TCP-reorient first
+                       (Precondition: robot positioned at jp_glue_rot).
+                       False = robot is at previous retract with matching
+                       orientation, go straight to approach.
+        exit_via_rot: True = return to jp_glue_rot after retract — safe for
+                      reorientation or station exit.
+                      False = stay at retract, ready for next plane with
+                      same orientation.
     """
     pre, app, ret = _build_offset_frames(glue_frame)
 
@@ -156,42 +204,54 @@ def _do_glue_sequence(r1, glue_frame, *, dry_run=False, tag="", glue_valve_enabl
 
     if dry_run:
         z_calc = _computed_zaxis(glue_frame)
-        print(f"{prefix}z_calc={z_calc}")
-        print(f"{prefix}  rot joints: {jp_glue_rot.robax} extax={jp_glue_rot.extax}")
+        entry = "rot+reorient" if enter_via_rot else "direct(ret->app)"
+        exit_path = "->rot" if exit_via_rot else "stay@ret"
+        print(f"{prefix}z_calc={z_calc} entry={entry} exit={exit_path}")
+        if enter_via_rot:
+            print(f"{prefix}  rot joints: {jp_glue_rot.robax} extax={jp_glue_rot.extax}")
         print(f"{prefix}  pre:   X={pre.point.x:.0f} Y={pre.point.y:.0f} Z={pre.point.z:.0f}")
         print(f"{prefix}  app:   X={app.point.x:.0f} Y={app.point.y:.0f} Z={app.point.z:.0f}")
         print(f"{prefix}  start: X={glue_frame.point.x:.0f} Y={glue_frame.point.y:.0f} Z={glue_frame.point.z:.0f}")
         print(f"{prefix}  ret:   X={ret.point.x:.0f} Y={ret.point.y:.0f} Z={ret.point.z:.0f}")
         return
 
-    print(f"{prefix}Executing glue sequence.")
+    print(f"{prefix}Executing glue sequence "
+          f"(entry={'rot' if enter_via_rot else 'direct'}, "
+          f"exit={'rot' if exit_via_rot else 'ret'}).")
 
-    # Caller has already positioned us at jp_glue_rot (a safe rotation pose
-    # where J6 can rotate freely without beam-arm collision). After A's
-    # sequence ends at jp_glue_rot, B's sequence reuses that state without
-    # an extra coord move.
+    if enter_via_rot:
+        # Reorient TCP at jp_glue_rot's position to glue_frame's orientation BEFORE
+        # translating. A combined rotate+translate move makes the held beam swing
+        # during the approach, which can collide with the glue station; rotating in
+        # place first means the subsequent move to `app` is pure translation.
+        current_tcp = r1.send_and_wait(rrc.GetFrame())
+        rot_oriented = Frame(current_tcp.point, glue_frame.xaxis, glue_frame.yaxis)
+        r1.send_and_wait(rrc.MoveToFrame(rot_oriented, SPEED_APPROACH, rrc.Zone.FINE, rrc.Motion.LINEAR))
 
-    # Reorient TCP at jp_glue_rot's position to glue_frame's orientation BEFORE
-    # translating. A combined rotate+translate move makes the held beam swing
-    # during the approach, which can collide with the glue station; rotating in
-    # place first means the subsequent move to `app` is pure translation.
-    current_tcp = r1.send_and_wait(rrc.GetFrame())
-    rot_oriented = Frame(current_tcp.point, glue_frame.xaxis, glue_frame.yaxis)
-    r1.send_and_wait(rrc.MoveToFrame(rot_oriented, SPEED_APPROACH, rrc.Zone.FINE, rrc.Motion.LINEAR))
-
-    # Move to approach (pure translation now — orientations match)
-    r1.send_and_wait(cm.MoveToRobtarget(app, jp_glue.extax, 2, rrc.Zone.Z10, rrc.Motion.LINEAR))
+        # Coordinated move to approach: track shifts from jp_glue_rot.extax (1000)
+        # to jp_glue.extax (500), robot reaches app simultaneously.
+        r1.send_and_wait(cm.MoveToRobtarget(app, jp_glue.extax, 1, rrc.Zone.Z10, rrc.Motion.LINEAR))
+    else:
+        # Direct mode: previous plane's orientation matches and track is already
+        # at jp_glue.extax — pure TCP linear at SPEED_WITH_MEMBER, no time-based
+        # coord-move overhead. Pipelines into the previous plane's retract via Z10.
+        r1.send_and_wait(rrc.MoveToFrame(app, SPEED_WITH_MEMBER, rrc.Zone.Z10, rrc.Motion.LINEAR))
 
     # Execute zigzag glue pattern (handles its own move-to-line-start)
     _run_glue_line(r1, glue_frame, glue_valve_enabled=glue_valve_enabled)
 
-    # Retract + go back to pre position
-    r1.send(rrc.MoveToFrame(ret, SPEED_WITH_MEMBER, rrc.Zone.Z10, rrc.Motion.LINEAR))
-    #r1.send_and_wait(rrc.MoveToFrame(pre, SPEED_WITH_MEMBER, rrc.Zone.Z50, rrc.Motion.LINEAR))
-
-    # Return to safe rotation pose. Replaces the old J6=0 reset: the beam ends
-    # up high above the arm, ready for the next glue plane or station exit.
-    r1.send_and_wait(cm.MoveToJoints(jp_glue_rot.robax, jp_glue_rot.extax, COORD_MOVE_TIME, rrc.Zone.FINE))
+    if exit_via_rot:
+        # Pipeline: ret + jp_glue_rot can flow together; the wait is on rot.
+        # Beam ends up high above the arm, ready for reorientation or station exit.
+        r1.send(rrc.MoveToFrame(ret, SPEED_WITH_MEMBER, rrc.Zone.Z10, rrc.Motion.LINEAR))
+        r1.send_and_wait(cm.MoveToJoints(jp_glue_rot.robax, jp_glue_rot.extax,
+                                         COORD_MOVE_TIME, rrc.Zone.FINE))
+    else:
+        # Stay near retract — next plane has matching orientation. `send`
+        # (no wait) lets the next call's approach blend in via Z10 without
+        # stopping at ret. Net effect: ret_prev -> app_next as one smooth
+        # linear move at SPEED_WITH_MEMBER.
+        r1.send(rrc.MoveToFrame(ret, SPEED_WITH_MEMBER, rrc.Zone.Z10, rrc.Motion.LINEAR))
 
 
 # ==============================================================================
@@ -199,7 +259,7 @@ def _do_glue_sequence(r1, glue_frame, *, dry_run=False, tag="", glue_valve_enabl
 # ==============================================================================
 
 def d_glue_station(r1, data, i, *, layer_idx=0, dry_run=False, glue_valve_enabled=True):
-    """Apply adhesive to beam at glue positions A and (optionally) B.
+    """Apply adhesive to beam at all glue positions in element["glue_positions"].
 
     The PLC safety handshake (glue_on/glue_off) brackets the entire operation —
     the glue system is only active while the robot is in the glue station.
@@ -215,21 +275,22 @@ def d_glue_station(r1, data, i, *, layer_idx=0, dry_run=False, glue_valve_enable
                             without dispensing (for position testing).
     """
     element = get_element(data, i, layer_idx=layer_idx)
-    glue_a_frame = element.get("glue_position_a")
-    glue_b_frame = element.get("glue_position_b")
+    glue_frames = element.get("glue_positions", [])
 
-    # Skip if no glue positions are defined
-    if not glue_a_frame and not glue_b_frame:
+    # Skip element entirely if no glue positions are defined — no station entry,
+    # no PLC handshake. Saves the ~10s round-trip for elements that don't glue.
+    if not glue_frames:
         print(f"[GLUE] Skipping element {i} - no glue positions defined")
         return
 
     if dry_run:
-        print(f"[GLUE] i={i} layer={layer_idx}")
+        print(f"[GLUE] i={i} layer={layer_idx}, n_planes={len(glue_frames)}")
         glue_on(r1, dry_run=True)
-        if glue_a_frame:
-            _do_glue_sequence(r1, glue_a_frame, dry_run=True, tag="A", glue_valve_enabled=glue_valve_enabled)
-        if glue_b_frame:
-            _do_glue_sequence(r1, glue_b_frame, dry_run=True, tag="B", glue_valve_enabled=glue_valve_enabled)
+        for frame, tag, enter_via_rot, exit_via_rot in _glue_plan(glue_frames):
+            _do_glue_sequence(r1, frame, dry_run=True, tag=tag,
+                              glue_valve_enabled=glue_valve_enabled,
+                              enter_via_rot=enter_via_rot,
+                              exit_via_rot=exit_via_rot)
         glue_off(r1, dry_run=True)
         return
 
@@ -243,7 +304,7 @@ def d_glue_station(r1, data, i, *, layer_idx=0, dry_run=False, glue_valve_enable
         cm.MoveToJoints(jp_glue_transit.robax, jp_glue_transit.extax, COORD_MOVE_TIME, rrc.Zone.FINE)
     )
     # Position once at jp_glue_rot here so each _do_glue_sequence call can
-    # skip the redundant entry move (A leaves us at rot, B reuses it).
+    # skip the redundant entry move (each call leaves us at rot, the next reuses it).
     r1.send_and_wait(
         cm.MoveToJoints(jp_glue_rot.robax, jp_glue_rot.extax, COORD_MOVE_TIME, rrc.Zone.FINE)
     )
@@ -255,13 +316,11 @@ def d_glue_station(r1, data, i, *, layer_idx=0, dry_run=False, glue_valve_enable
     glue_on(r1)
     print("Glue system enabled.")
 
-    # A = first call
-    if glue_a_frame:
-        _do_glue_sequence(r1, glue_a_frame, tag="A", glue_valve_enabled=glue_valve_enabled)
-
-    # B = second call
-    if glue_b_frame:
-        _do_glue_sequence(r1, glue_b_frame, tag="B", glue_valve_enabled=glue_valve_enabled)
+    for frame, tag, enter_via_rot, exit_via_rot in _glue_plan(glue_frames):
+        _do_glue_sequence(r1, frame, tag=tag,
+                          glue_valve_enabled=glue_valve_enabled,
+                          enter_via_rot=enter_via_rot,
+                          exit_via_rot=exit_via_rot)
 
     # Turn glue system off
     glue_off(r1)

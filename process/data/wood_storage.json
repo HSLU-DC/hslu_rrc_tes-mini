@@ -3,7 +3,7 @@
     "400_1": {
       "category": "400",
       "capacity": 23,
-      "count": 5,
+      "count": 0,
       "wobj": "ob_HSLU_Pick_400",
       "extax": 250,
       "base_frame": {
@@ -101,5 +101,5 @@
       "stack_offset_z": 25
     }
   },
-  "last_updated": "2026-04-30T15:36:47.659283"
+  "last_updated": "2026-05-06T08:24:08.272341"
 }

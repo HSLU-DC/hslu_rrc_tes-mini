@@ -24,7 +24,7 @@ das robotisch auf einen Grundrahmen (600 x 2500mm, 40x40mm) platziert wird.
 
 ## Was ihr liefern müsst
 
-Ihr liefert pro Element **5-6 Geometrien** als Grasshopper DataTree mit `{Layer;Element}` Struktur:
+Ihr liefert pro Element **4 Geometrien** im Haupt-DataTree mit `{Layer;Element}` Struktur:
 
 | Index | Name | Typ | Beschreibung |
 |-------|------|-----|-------------|
@@ -32,8 +32,8 @@ Ihr liefert pro Element **5-6 Geometrien** als Grasshopper DataTree mit `{Layer;
 | 1 | Centerline | Line | Mittelachse des fertigen Balkens |
 | 2 | Cut Plane A | Plane | Schnittebene Ende A |
 | 3 | Cut Plane B | Plane | Schnittebene Ende B |
-| 4 | Glue Plane A | Plane | Leimebene 1 (Unterseite) |
-| 5 | Glue Plane B | Plane | Leimebene 2 (Unterseite, optional) |
+
+Plus **0..N Leimebenen pro Element** in einem **separaten DataTree** (gleicher `{Layer;Element}` Pfad). Reihenfolge im Branch = Anfahrtsreihenfolge. Leerer Branch = keine Leimung für dieses Element.
 
 Alles im **Weltkoordinatensystem** von Rhino (= `ob_HSLU_Place`). Origin liegt oben links am Rahmen.
 
@@ -54,7 +54,7 @@ Folgendes wird automatisch berechnet:
 | Balkenquerschnitt | 25 x 25mm |
 | Maximale Anzahl Layer | 2 (Layer 0 und Layer 1) |
 | Schnitttyp | Nur Gehrungsschnitte (1D), keine Schifterschnitte |
-| Leimebenen pro Element | 1 - 2 |
+| Leimebenen pro Element | 0 - N (variable Anzahl) |
 | Platzierungsreihenfolge | = Reihenfolge im DataTree |
 
 ## Workflow
@@ -70,14 +70,7 @@ Folgendes wird automatisch berechnet:
 
 ### 2. JSON prüfen
 
-Die exportierte Datei liegt unter `process/data/fab_data.json`.
-
-Ihr könnt die Daten vorab prüfen:
-
-```bash
-cd process
-python validate.py
-```
+Die exportierte Datei liegt unter `process/data/fab_data.json`. Die Validierung läuft direkt im Grasshopper-Template (visuelles Feedback grün/orange/rot) — eine separate Python-Validierung gibt es nicht mehr.
 
 ### 3. RobotStudio-Simulation (empfohlen vor jedem realen Lauf)
 
@@ -211,7 +204,6 @@ hslu_rrc_facade/
 │   └── validate_fab_data.py     # GH Python Validierung
 ├── process/                     # (Work in Progress)
 │   ├── production.py            # Hauptskript
-│   ├── validate.py              # Daten-Validierung
 │   ├── globals.py               # Konfiguration
 │   ├── data/
 │   │   ├── fab_data.json        # Euer Export (aus GH)
@@ -228,7 +220,7 @@ hslu_rrc_facade/
 | Problem | Lösung |
 |---------|--------|
 | Roboter in GH zeigt unrealistische Pose | Geometrie anpassen, Position ist nicht erreichbar |
-| `validate.py` zeigt Fehler | Daten in GH korrigieren und neu exportieren |
+| GH-Validierung zeigt Fehler (orange/rot) | Daten in GH korrigieren und neu exportieren |
 | "Nicht genug Holz" | Holzlager physisch auffüllen, Script fragt danach |
 | Docker-Fehler | `docker compose down && docker compose up -d` |
 | Roboter antwortet nicht | Prüfe ob Controller eingeschaltet und im AUTO-Modus |

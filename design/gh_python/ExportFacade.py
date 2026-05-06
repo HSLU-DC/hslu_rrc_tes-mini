@@ -8,26 +8,28 @@
 # ==============================================================================
 # INPUTS
 # ==============================================================================
-#   update (bool):        Trigger export
-#   file_path (str):      Path to output JSON file (STL folder derived from it)
-#   fab_data (DataTree):  Tree with {layer;element} structure
+#   update (bool):              Trigger export
+#   file_path (str):            Path to output JSON file (STL folder derived)
+#   fab_data (DataTree):        Tree with {layer;element} structure
+#   glue_planes_tree (DataTree): Tree with {layer;element} structure, 0..N
+#                                glue position frames (in ob_HSLU_Glue coords)
+#                                per branch. Order = robot drive order.
 #
 # ==============================================================================
 # FAB_DATA INDEX MAPPING (Facade)
 # ==============================================================================
 #
-#   0  = brep              << Finished beam geometry (= cutB, student input)
-#   1  = centerline        << Line along beam centerline (raw + grip frame)
-#   2  = cut_plane_a       << Plane for first miter cut
-#   3  = cut_plane_b       << Plane for second miter cut (currently unused in STL)
-#   4  = glue_plane_a      (skip)
-#   5  = glue_plane_b      (skip)
-#   6  = place_position    << Frame (in ob_HSLU_Place coordinates)
-#   7  = cut_position_a    << Frame (in ob_HSLU_Cut coordinates)
-#   8  = cut_position_b    << Frame (in ob_HSLU_Cut coordinates)
-#   9  = glue_position_a   << Frame (in ob_HSLU_Glue coordinates)
-#   10 = glue_position_b   << Frame (in ob_HSLU_Glue coordinates, can be null)
-#   11 = beam_size         << String, one of "400" / "550" / "750" / "1000"
+#   0 = brep              << Finished beam geometry (= cutB, student input)
+#   1 = centerline        << Line along beam centerline (raw + grip frame)
+#   2 = cut_plane_a       << Plane for first miter cut
+#   3 = cut_plane_b       << Plane for second miter cut (currently unused in STL)
+#   4 = place_position    << Frame (in ob_HSLU_Place coordinates)
+#   5 = cut_position_a    << Frame (in ob_HSLU_Cut coordinates)
+#   6 = cut_position_b    << Frame (in ob_HSLU_Cut coordinates)
+#   7 = beam_size         << String, one of "400" / "550" / "750" / "1000"
+#
+# Glue positions are NOT part of fab_data — they live in their own tree
+# (glue_planes_tree) so the per-element list can be variable length.
 #
 # ==============================================================================
 # OUTPUT
@@ -64,13 +66,11 @@ from Grasshopper.Kernel.Data import GH_Path
 # Index mapping: JSON side
 # ==============================================================================
 INDEX_MAP = {
-    6:  "place_position",
-    7:  "cut_position_a",
-    8:  "cut_position_b",
-    9:  "glue_position_a",
-    10: "glue_position_b",
+    4: "place_position",
+    5: "cut_position_a",
+    6: "cut_position_b",
 }
-BEAM_SIZE_INDEX = 11
+BEAM_SIZE_INDEX = 7
 
 # ==============================================================================
 # Index mapping: STL side
@@ -367,7 +367,7 @@ def validate_element_basic(element, layer_idx, elem_idx):
     warnings = []
     prefix = "L{} E{}".format(layer_idx, elem_idx)
 
-    for field in ["place_position", "cut_position_a", "cut_position_b", "glue_position_a"]:
+    for field in ["place_position", "cut_position_a", "cut_position_b"]:
         if field not in element:
             warnings.append("{}: '{}' fehlt!".format(prefix, field))
 
@@ -500,6 +500,13 @@ if update:
                     frame = to_compas_frame(branch[idx])
                     if frame is not None:
                         element[pos_name] = frame
+
+            # Glue positions: variable-length list from glue_planes_tree.
+            # Empty branch / missing tree -> empty list (= no gluing for this element).
+            glue_branch = get_branch(glue_planes_tree, GH_Path(layer_idx, elem_idx))
+            element["glue_positions"] = [
+                f for f in (to_compas_frame(p) for p in glue_branch) if f is not None
+            ]
 
             warnings = validate_element_basic(element, layer_idx, elem_idx)
             all_warnings.extend(warnings)

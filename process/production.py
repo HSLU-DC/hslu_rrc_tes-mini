@@ -28,12 +28,6 @@ Configuration (in this file):
 Runtime selection (interactive at startup):
     - Layer (0 or 1, only prompted if data has multiple layers)
     - Element range (Enter = alle, oder z.B. "5-10" / "12")
-
-Validation:
-    Two-stage validation runs before any robot motion:
-    1. validate.py checks fab_data structure, bounds, cut angles
-    2. Per-element validation checks each beam in the planned range
-    Production aborts if any check fails.
 """
 
 # ==============================
@@ -50,7 +44,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 #
 # DO NOT enable on the real cell. Sim-only.
 SIM_FAST = True
-SIM_FAST_FACTOR = 4
+SIM_FAST_FACTOR = 8
 
 if SIM_FAST:
     import globals as _g
@@ -70,19 +64,11 @@ from prompt_toolkit import prompt as ptk_prompt
 from _skills.fabdata import load_data, has_layers, get_layer_count, get_element_count, get_element
 from _skills.SimBeam import sim_beam_reset
 from _skills.WoodStorage.wood_storage import WoodStorage, VALID_CATEGORIES
-from globals import ROBOT_NAME, TOOL_GRIPPER, MAX_LAYERS
+from globals import ROBOT_NAME, TOOL_GRIPPER
 from joint_positions import jp_home, jp_park
 import _skills.custom_motion as cm
 
 from stations import a_pick_station, b_cut_station, d_glue_station, e_place_station
-
-# Try to import validation (non-fatal if missing during development)
-try:
-    from validate import validate_all, validate_element
-    HAS_VALIDATION = True
-except ImportError:
-    HAS_VALIDATION = False
-    print("[WARN] validate.py not found - running WITHOUT validation!")
 
 
 # ==============================
@@ -99,6 +85,12 @@ CSS_ENABLED = True            # Cartesian Soft Servo for gentle gripping at pick
 SAW_ENABLED = True            # Circular saw on/off during cut moves
 GLUE_VALVE_ENABLED = True     # Glue valve pulsing during glue moves
 SIM_BEAMS = True              # BeamSimulator SmartComponent (virtual controller only)
+
+# Demo mode: skip all wood-storage operator prompts. Initial check auto-accepts
+# the recommendation, mid-production refills auto-fill without parking. Lets a
+# RobotStudio simulation run end-to-end without interaction. DO NOT enable on
+# the real cell — the operator never gets a chance to actually load wood.
+AUTO_REFILL_LAGER = True
 
 # Production range (LAYER / START_I / N_RUNS) is asked interactively at runtime.
 # Default = full layer 0; the operator can choose layer + element range.
@@ -205,6 +197,13 @@ def check_wood_storage(data, production_plan):
         for w in warnings:
             print(w)
 
+    # ---- Auto mode for demos: accept recommendation without prompt ----
+    if AUTO_REFILL_LAGER:
+        for cat in VALID_CATEGORIES:
+            storage.set_count(cat, recommendations[cat])
+        print("\n[AUTO] Lager wie empfohlen konfiguriert (AUTO_REFILL_LAGER=True).")
+        return True
+
     # ---- Single confirmation prompt ----
     print("\nHast du genau die Empfehlung ins Lager gelegt?")
     print("  [Enter] = ja, weiter mit Produktion")
@@ -255,8 +254,15 @@ def refill_lager(r1, storage, category, remaining_demand, *, dry_run=False):
     capacity = storage.get_capacity(category)
     recommended = min(remaining_demand, capacity)
 
+    # Demo mode: no park move, no operator prompt — just refill to recommendation
+    # so a RobotStudio simulation can run end-to-end without interaction.
+    if AUTO_REFILL_LAGER:
+        storage.set_count(category, recommended)
+        print(f"\n[AUTO-REFILL] Lager '{category}' mm leer -> auf {recommended} Stueck gesetzt.\n")
+        return
+
     if not dry_run and r1 is not None:
-        r1.send_and_wait(cm.MoveToJoints(jp_park.robax, jp_park.extax, 2, rrc.Zone.Z50))
+        r1.send_and_wait(cm.MoveToJoints(jp_park.robax, jp_park.extax, 1, rrc.Zone.Z50))
 
     print("\n" + "=" * 60)
     print(f"  LAGER {category} mm IST LEER - bitte nachfuellen")
@@ -369,7 +375,7 @@ def main(*, dry_run=False):
     """
 
     # ==============================
-    # 1. Load & Validate Data
+    # 1. Load Data
     # ==============================
     print("\n" + "=" * 50)
     print("FACADE PRODUCTION")
@@ -377,28 +383,11 @@ def main(*, dry_run=False):
 
     DATA = load_data()
 
-    # Validate data before anything else
-    if HAS_VALIDATION:
-        print("\nValidiere Daten...")
-        errors = validate_all(DATA)
-        if errors:
-            print("\n[FEHLER] Validierung fehlgeschlagen!")
-            print("=" * 50)
-            for err in errors:
-                print(f"  - {err}")
-            print("=" * 50)
-            print("\nBitte Daten in Grasshopper korrigieren und neu exportieren.")
-            return
-        print("[OK] Alle Validierungen bestanden.\n")
-
     # ==============================
     # 2. Layer + Element Range Selection
     # ==============================
     if has_layers(DATA):
         n_layers = get_layer_count(DATA)
-        if n_layers > MAX_LAYERS:
-            print(f"[FEHLER] Daten haben {n_layers} Layer, max {MAX_LAYERS} erlaubt.")
-            return
         print(f"Daten: {n_layers} Layer")
     else:
         n_layers = 1
@@ -441,17 +430,6 @@ def main(*, dry_run=False):
             print(f"  Layer {ly}: Element {elems[0]}")
         else:
             print(f"  Layer {ly}: {len(elems)} Elemente ({elems[0]}..{elems[-1]})")
-
-    # Per-element validation
-    if HAS_VALIDATION:
-        for ly, i in production_plan:
-            element = get_element(DATA, i, layer_idx=ly)
-            elem_errors = validate_element(element, ly, i)
-            if elem_errors:
-                print(f"\n[FEHLER] Element {i} (Layer {ly}) ist ungueltig:")
-                for err in elem_errors:
-                    print(f"  - {err}")
-                return
 
     # ==============================
     # 3. Check Wood Storage

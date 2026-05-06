@@ -17,8 +17,7 @@ from typing import Optional
 from compas.geometry import Frame, Point, Vector
 
 # Beam size categories keyed by stock length (mm). Order matters for status
-# output. Must match VALID_BEAM_SIZES in validate.py and STOCK_LENGTHS in
-# design/gh_python/ExportFacade.py.
+# output. Must match STOCK_LENGTHS in design/gh_python/ExportFacade.py.
 VALID_CATEGORIES = ("400", "550", "750", "1000")
 
 
