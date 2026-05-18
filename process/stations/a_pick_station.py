@@ -82,10 +82,10 @@ def a_pick_station(r1, data, i, *, layer_idx=0, dry_run=False, css_enabled=True,
     # storage.get_pick_frame() raise with a clear "Ungueltige Kategorie"
     # error rather than silently picking wrong stock.
     element = get_element(data, i, layer_idx=layer_idx)
-    beam_size = element.get("beam_size", "").strip('"').strip("'")
+    stock_category = element.get("stock_category", "").strip('"').strip("'")
 
     # Get pick frame from storage
-    pick_frame, compartment_id, wobj, extax = storage.get_pick_frame(beam_size)
+    pick_frame, compartment_id, wobj, extax = storage.get_pick_frame(stock_category)
 
     # Define approach frames
     # 1. Pre-approach: safe position above storage (180 deg rotated)
@@ -116,7 +116,7 @@ def a_pick_station(r1, data, i, *, layer_idx=0, dry_run=False, css_enabled=True,
 
     if dry_run:
         print(f"[PICK] layer={layer_idx} i={i}")
-        print(f"  beam_size: {beam_size}")
+        print(f"  stock_category: {stock_category}")
         print(f"  compartment: {compartment_id}")
         print(f"  wobj: {wobj}, extax: {extax}")
         print(f"  === APPROACH ===")

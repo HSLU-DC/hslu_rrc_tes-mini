@@ -20,7 +20,7 @@ design/
   hslu_rrc_tes-mini.3dm      # Rhino file (gitignored, too large)
   gh_python/
     ExportFacade.py          # GH component: writes fab_data JSON + 3 STLs per element
-    holzbedarf.py            # GH component: count elements per beam_size + total laufmeter
+    holzbedarf.py            # GH component: count elements per stock_category + total laufmeter
 
 docs/
   images/                    # Documentation images
@@ -85,7 +85,7 @@ Glue planes are passed via a **separate** DataTree input on the export
 component (`glue_planes_tree`) with the same `{layer;element}` path. Each
 branch holds 0..N planes; list order = robot drive order.
 
-GH template automatically computes: beam_size, place_position, robot frames in station workobjects.
+GH template automatically computes: stock_category, place_position, robot frames in station workobjects.
 
 Frame bounds: X = 0..2500mm, Y = -600..0mm. Origin = top-left of frame.
 
@@ -99,23 +99,68 @@ Frame bounds: X = 0..2500mm, Y = -600..0mm. Origin = top-left of frame.
 - JSON has 5 fields per element + variable-length glue_positions list
 - Students provide raw geometry (Brep, Centerline, Planes), GH transforms to robot frames
 
-## Data Format (v3 Facade)
-```json
+## Data Format (tes-v4 SSOT)
+Six top-level sections, written by `design/gh_python/ExportFacade.py`, read by
+`process/_skills/fabdata.py` (fabrication) and `process/_skills/state.py` (state).
+
+```jsonc
 {
-  "layers": [{
-    "id": 0,
-    "elements": [{
+  "manifest":      { "manifest_id", "created_at", "pipeline_version", "schema_version": "tes-v4" },
+  "configuration": { "project_name", "frame_size_mm", "beam_section_mm", "structural", "grid", "materials", "stock" },
+  "design": {
+    "layers": [{
       "id": 0,
-      "beam_size": "400|550|750|1000",
-      "place_position": Frame,
-      "cut_position_a": Frame,
-      "cut_position_b": Frame,
-      "glue_positions": [Frame, ...]   // 0..N, [] = skip glue station
+      "elements": [{
+        "id": 0,
+        "stock_category": "400|550|750|1000",
+        "centerline": Line,
+        "finished_length_mm": 750.0
+      }]
     }]
-  }],
-  "metadata": { "version": "3.0", "project": "facade" }
+  },
+  "process": {
+    "cut_planes_world":  [{ "element_ref": "L0_E0", "plane_a": Frame, "plane_b": Frame }],
+    "glue_planes_world": [{ "element_ref": "L0_E0", "planes": [Frame, ...] }]
+  },
+  "fabrication": {
+    "target_cell": "hslu_rrc_tes-mini",
+    "cell_config_ref": null,
+    "layers": [{
+      "id": 0,
+      "elements": [{
+        "id": 0,
+        "stock_category": "400|550|750|1000",
+        "place_position": Frame,
+        "cut_position_a": Frame,
+        "cut_position_b": Frame,
+        "glue_positions": [Frame, ...]   // 0..N, [] = skip glue station
+      }]
+    }]
+  },
+  "state": {
+    "run_id", "started_at", "last_updated_at",
+    "elements": {
+      "L0_E0": {
+        "pick":  { "status": "pending|in_progress|done|failed", "at", "error" },
+        "cut":   { ... },
+        "glue":  { ... },
+        "place": { ... }
+      }
+    },
+    "errors": []
+  }
 }
 ```
+
+**Schichten:** `design` = fertigungsneutral (Centerlines), `process` = anlagenneutral
+(Welt-KS Cut/Glue Planes), `fabrication` = anlagenspezifisch (Workobject-Frames).
+Anlagenwechsel HSLU→TUM regeneriert nur die `fabrication`-Section.
+
+**State:** atomic save in dieselbe fab_data.json (tmp + os.replace). Resume-Prompt
+am Start von production.py, Skip-If-Done pro Station.
+
+**Frame-Format:** COMPAS `compas.geometry/Frame` mit point/xaxis/yaxis (kompakt als
+1-Zeiler geschrieben via custom encoder, ~5400 Zeilen statt ~42000 bei 106 Elementen).
 
 ## compas_rrc Connection Pattern
 ```python
@@ -202,7 +247,7 @@ visualization shows reachability. There is no Python-side validation —
 - Frame: X = 0..2500mm, Y = -600..0mm
 - Max 2 layers
 - Only 1D miter cuts (Gehrungsschnitte), no Schifterschnitte
-- beam_size: automatically determined from centerline length
+- stock_category: automatically determined from centerline length
 - 0..N glue planes per element (empty list = no gluing)
 - Students must NOT modify `_skills/` or `stations/`
 

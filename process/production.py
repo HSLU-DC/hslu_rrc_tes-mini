@@ -61,7 +61,8 @@ if SIM_FAST:
 import compas_rrc as rrc
 from prompt_toolkit import prompt as ptk_prompt
 
-from _skills.fabdata import load_data, has_layers, get_layer_count, get_element_count, get_element
+from _skills.fabdata import load_data, get_layer_count, get_element_count, get_element, PATH as FAB_DATA_PATH
+from _skills import state as st
 from _skills.SimBeam import sim_beam_reset
 from _skills.WoodStorage.wood_storage import WoodStorage, VALID_CATEGORIES
 from globals import ROBOT_NAME, TOOL_GRIPPER
@@ -105,15 +106,15 @@ def _compute_demand(data, production_plan):
 
     Returns:
         (demand_dict, None, None) on success
-        (None, bad_size, (layer, i)) if an element has unknown beam_size
+        (None, bad_size, (layer, i)) if an element has unknown stock_category
     """
     demand = {cat: 0 for cat in VALID_CATEGORIES}
     for layer, i in production_plan:
         element = get_element(data, i, layer_idx=layer)
-        beam_size = element.get("beam_size", "").strip('"').strip("'")
-        if beam_size not in demand:
-            return None, beam_size, (layer, i)
-        demand[beam_size] += 1
+        stock_category = element.get("stock_category", "").strip('"').strip("'")
+        if stock_category not in demand:
+            return None, stock_category, (layer, i)
+        demand[stock_category] += 1
     return demand, None, None
 
 
@@ -157,14 +158,14 @@ def check_wood_storage(data, production_plan):
         production_plan: list of (layer_idx, element_idx) tuples
 
     Returns:
-        True on success, False on bad data (unknown beam_size in design)
+        True on success, False on bad data (unknown stock_category in design)
     """
     storage = WoodStorage()
 
     demand, bad_size, bad_loc = _compute_demand(data, production_plan)
     if demand is None:
         bad_layer, bad_i = bad_loc
-        print(f"\n[FEHLER] Unbekannte beam_size: '{bad_size}' bei Layer {bad_layer}, Element {bad_i}")
+        print(f"\n[FEHLER] Unbekannte stock_category: '{bad_size}' bei Layer {bad_layer}, Element {bad_i}")
         return False
 
     # Recommended counts (capped at lager capacity)
@@ -290,7 +291,7 @@ def _remaining_demand(data, production_plan, plan_idx, category):
     return sum(
         1 for layer, i in production_plan[plan_idx:]
         if get_element(data, i, layer_idx=layer)
-               .get("beam_size", "").strip('"').strip("'") == category
+               .get("stock_category", "").strip('"').strip("'") == category
     )
 
 
@@ -384,14 +385,29 @@ def main(*, dry_run=False):
     DATA = load_data()
 
     # ==============================
+    # 1b. State-Recovery: Resume oder Reset?
+    # ==============================
+    if st.has_progress(DATA):
+        summary = st.progress_summary(DATA)
+        run_id = DATA["state"].get("run_id") or "?"
+        print(f"\nVorheriger Lauf gefunden: {run_id} ({summary})")
+        print("  [R] Resume  - bei erster nicht-done Action weitermachen")
+        print("  [N] Neu     - State zuruecksetzen, von vorne")
+        print("  [A] Abbruch")
+        choice = ptk_prompt("> ", default="R").strip().upper() or "R"
+        if choice == "A":
+            print("Abgebrochen.")
+            return
+        if choice == "N":
+            st.reset_state(DATA)
+            st.save_atomic(DATA, FAB_DATA_PATH)
+            print("[OK] State zurueckgesetzt.")
+
+    # ==============================
     # 2. Layer + Element Range Selection
     # ==============================
-    if has_layers(DATA):
-        n_layers = get_layer_count(DATA)
-        print(f"Daten: {n_layers} Layer")
-    else:
-        n_layers = 1
-        print("Daten im v2-Format (kein Layer)")
+    n_layers = get_layer_count(DATA)
+    print(f"Daten: {n_layers} Layer")
 
     layer_choice = _prompt_layer(n_layers)
 
@@ -474,37 +490,64 @@ def main(*, dry_run=False):
     # check so take_beam() decrements from inside a_pick_station are visible).
     storage_check = None if dry_run else WoodStorage()
 
+    run_id = st.start_run(DATA)
+    st.save_atomic(DATA, FAB_DATA_PATH)
+    print(f"\n[STATE] Run gestartet: {run_id}")
+
+    def _run_station(ref, action_name, label, fn):
+        """Skip if state says done. Mark done after, failed on exception."""
+        if st.is_done(DATA, ref, action_name):
+            print(f"\n--- {label} --- (skip, bereits done)")
+            return
+        print(f"\n--- {label} ---")
+        st.mark_action(DATA, ref, action_name, "in_progress")
+        st.save_atomic(DATA, FAB_DATA_PATH)
+        try:
+            fn()
+        except Exception as e:
+            st.mark_action(DATA, ref, action_name, "failed", error=str(e))
+            st.append_error(DATA, f"{ref} {action_name}: {e}")
+            st.save_atomic(DATA, FAB_DATA_PATH)
+            raise
+        st.mark_action(DATA, ref, action_name, "done")
+        st.save_atomic(DATA, FAB_DATA_PATH)
+
     for plan_idx, (ly, i) in enumerate(production_plan):
+        ref = st.element_ref(ly, i)
         print(f"\n{'='*50}")
-        print(f"  LAYER {ly} | ELEMENT {i} ({plan_idx+1}/{n_total_run})")
+        print(f"  LAYER {ly} | ELEMENT {i} ({plan_idx+1}/{n_total_run})  ref={ref}")
         print(f"{'='*50}")
+
+        if st.all_actions_done(DATA, ref):
+            print("  [SKIP] Element vollstaendig done (resume).")
+            continue
 
         if DO_PICK:
             element = get_element(DATA, i, layer_idx=ly)
-            beam_size = element.get("beam_size", "").strip('"').strip("'")
+            stock_category = element.get("stock_category", "").strip('"').strip("'")
 
             # Fail-safe: if the lager for this category is empty, park robot
             # and prompt operator to refill before attempting the pick.
-            if not dry_run:
+            if not dry_run and not st.is_done(DATA, ref, "pick"):
                 storage_check.reload()
-                if not storage_check.has_beams(beam_size):
-                    remaining = _remaining_demand(DATA, production_plan, plan_idx, beam_size)
-                    refill_lager(r1, storage_check, beam_size, remaining)
+                if not storage_check.has_beams(stock_category):
+                    remaining = _remaining_demand(DATA, production_plan, plan_idx, stock_category)
+                    refill_lager(r1, storage_check, stock_category, remaining)
 
-            print("\n--- PICK ---")
-            a_pick_station.a_pick_station(r1, DATA, i, layer_idx=ly, dry_run=dry_run, css_enabled=CSS_ENABLED, sim_beams=SIM_BEAMS)
+            _run_station(ref, "pick", "PICK", lambda: a_pick_station.a_pick_station(
+                r1, DATA, i, layer_idx=ly, dry_run=dry_run, css_enabled=CSS_ENABLED, sim_beams=SIM_BEAMS))
 
         if DO_CUT:
-            print("\n--- CUT ---")
-            b_cut_station.b_cut_station(r1, DATA, i, layer_idx=ly, dry_run=dry_run, saw_enabled=SAW_ENABLED, sim_beams=SIM_BEAMS)
+            _run_station(ref, "cut", "CUT", lambda: b_cut_station.b_cut_station(
+                r1, DATA, i, layer_idx=ly, dry_run=dry_run, saw_enabled=SAW_ENABLED, sim_beams=SIM_BEAMS))
 
         if DO_GLUE:
-            print("\n--- GLUE ---")
-            d_glue_station.d_glue_station(r1, DATA, i, layer_idx=ly, dry_run=dry_run, glue_valve_enabled=GLUE_VALVE_ENABLED)
+            _run_station(ref, "glue", "GLUE", lambda: d_glue_station.d_glue_station(
+                r1, DATA, i, layer_idx=ly, dry_run=dry_run, glue_valve_enabled=GLUE_VALVE_ENABLED))
 
         if DO_PLACE:
-            print("\n--- PLACE ---")
-            e_place_station.e_place_station(r1, DATA, i, layer_idx=ly, dry_run=dry_run, sim_beams=SIM_BEAMS)
+            _run_station(ref, "place", "PLACE", lambda: e_place_station.e_place_station(
+                r1, DATA, i, layer_idx=ly, dry_run=dry_run, sim_beams=SIM_BEAMS))
 
     # ==============================
     # 6. Cleanup
@@ -519,6 +562,7 @@ def main(*, dry_run=False):
 
     print(f"\n{'='*50}")
     print(f"  FERTIG - {n_total_run} Elemente produziert")
+    print(f"  State: {st.progress_summary(DATA)}")
     print(f"{'='*50}")
 
 

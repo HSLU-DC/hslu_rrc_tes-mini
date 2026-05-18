@@ -177,8 +177,8 @@ def b_cut_station(r1, data, i, *, layer_idx=0, dry_run=False, saw_enabled=True, 
 
     # Get beam size and track position from pick station. Missing/unknown
     # values surface as a "Unknown category" ValueError from storage.get_extax().
-    beam_size = element.get("beam_size", "").strip('"').strip("'")
-    pick_extax = storage.get_extax(beam_size)
+    stock_category = element.get("stock_category", "").strip('"').strip("'")
+    pick_extax = storage.get_extax(stock_category)
 
     # When the track moves from pick position to cut position, the beam's
     # world X coordinate shifts by the same amount. We need to compensate
@@ -189,7 +189,7 @@ def b_cut_station(r1, data, i, *, layer_idx=0, dry_run=False, saw_enabled=True, 
 
     if dry_run:
         print(f"[CUT] i={i} layer={layer_idx} | saw={saw_enabled}")
-        print(f"  beam_size: {beam_size} | pick_extax: {pick_extax} | delta: {track_delta}")
+        print(f"  stock_category: {stock_category} | pick_extax: {pick_extax} | delta: {track_delta}")
         _do_cut_sequence(None, cut_a_frame, dry_run=True, saw_on=saw_enabled, saw_off=False)
         _do_cut_sequence(None, cut_b_frame, dry_run=True, saw_on=False, saw_off=saw_enabled)
         return

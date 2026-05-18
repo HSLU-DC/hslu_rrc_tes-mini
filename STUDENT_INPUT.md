@@ -66,7 +66,7 @@ Die Mittelachse des **fertigen** (zugeschnittenen) Balkens als Linie. Die Center
 Die Centerline bestimmt automatisch:
 - Die **Platzierungsposition** (Mittelpunkt der Centerline)
 - Die **Platzierungsrichtung** (Richtung der Centerline)
-- Die **beam_size** (Länge der Centerline bestimmt aus welchem Lager das Holz geholt wird)
+- Die **stock_category** (Länge der Centerline bestimmt aus welchem Lager das Holz geholt wird)
 
 <img src="docs/images/03_centerline.png" width="600">
 
@@ -76,7 +76,7 @@ Im Lager liegen Stäbe in **vier festen Längen**: **400 / 550 / 750 / 1000 mm**
 
 Aus der Centerline-Länge wird automatisch der **nächst-grössere** Bucket gewählt; die Differenz wird in der Cut-Station weggeschnitten.
 
-| Centerline-Länge | Stock-Länge (= beam_size) | Verschnitt |
+| Centerline-Länge | Stock-Länge (= stock_category) | Verschnitt |
 |---|---|---|
 | 0 - 400 mm   | 400 mm  | bis zu 400 mm |
 | 401 - 550 mm | 550 mm  | bis zu 150 mm |
@@ -197,7 +197,7 @@ Entscheidung liegt bei euch - überlegt was strukturell sinnvoll ist.
 |-----------|------|
 | Rahmengrösse | X: 0 - 2500mm, Y: 0 - -600mm |
 | Balkenquerschnitt | 25 x 25mm |
-| Stock-Längen (beam_size) | 400 / 550 / 750 / 1000 mm (automatisch aus Centerline gewählt) |
+| Stock-Längen (stock_category) | 400 / 550 / 750 / 1000 mm (automatisch aus Centerline gewählt) |
 | Max Centerline-Länge | 1000 mm |
 | Min Centerline-Länge | abhängig von Schnittwinkel — in GH-IK-Vorschau prüfen |
 | Maximale Anzahl Layer | 2 |

@@ -42,7 +42,7 @@ Die detaillierte Spezifikation mit Bildern findet ihr unter **[`STUDENT_INPUT.md
 <img src="docs/images/01_rhino_gh_anlage.png" width="600">
 
 Folgendes wird automatisch berechnet:
-- **beam_size** (aus Centerline-Länge)
+- **stock_category** (aus Centerline-Länge)
 - **place_position** (aus Centerline)
 - **Roboter-Positionen** (Transformation in die jeweiligen Workobjects)
 

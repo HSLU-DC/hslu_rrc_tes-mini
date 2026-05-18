@@ -1,35 +1,40 @@
 # Grasshopper Component: Export Facade (JSON + Simulation STLs)
-# ghenv.Component.Message = 'Export Facade v1'
+# ghenv.Component.Message = 'Export Facade v2 (tes-v4 SSOT)'
 #
-# Paste this script into the fab_data export component in the GH template.
-# It writes both the fab_data JSON and the three STL files per element
-# used by the RobotStudio BeamSimulator. STLs land in <json_dir>/geometry/.
+# Schreibt fab_data.json im tes-v4 SSOT-Schema mit sechs Top-Level-Sections
+# (manifest, configuration, design, process, fabrication, state) und die drei
+# STL-Files pro Element fuer den RobotStudio BeamSimulator. STLs landen in
+# <json_dir>/geometry/.
 #
 # ==============================================================================
 # INPUTS
 # ==============================================================================
-#   update (bool):              Trigger export
-#   file_path (str):            Path to output JSON file (STL folder derived)
-#   fab_data (DataTree):        Tree with {layer;element} structure
-#   glue_planes_tree (DataTree): Tree with {layer;element} structure, 0..N
-#                                glue position frames (in ob_HSLU_Glue coords)
-#                                per branch. Order = robot drive order.
+#   update (bool):                    Trigger export
+#   file_path (str):                  Path to output JSON file (STL folder derived)
+#   fab_data (DataTree):              Tree with {layer;element} structure (siehe
+#                                     BRANCH_INDEX_MAP unten)
+#   glue_planes_world_tree (DataTree, optional): Welt-KS Glue-Planes pro Element,
+#                                     vor Reorient ins Anlagen-Workobject. Speist
+#                                     process.glue_planes_world.
+#   glue_planes_tree (DataTree):      Wobj-KS Glue-Planes (in ob_HSLU_Glue coords),
+#                                     speist fabrication.glue_positions.
+#   configuration_json (str, optional): JSON-String mit Configuration-Section.
+#                                     Wenn None/leer: hartkodierte Defaults aus
+#                                     DEFAULT_CONFIGURATION (PoC).
 #
 # ==============================================================================
-# FAB_DATA INDEX MAPPING (Facade)
+# FAB_DATA BRANCH-INDEX MAPPING (Facade)
 # ==============================================================================
 #
 #   0 = brep              << Finished beam geometry (= cutB, student input)
-#   1 = centerline        << Line along beam centerline (raw + grip frame)
-#   2 = cut_plane_a       << Plane for first miter cut
-#   3 = cut_plane_b       << Plane for second miter cut (currently unused in STL)
-#   4 = place_position    << Frame (in ob_HSLU_Place coordinates)
-#   5 = cut_position_a    << Frame (in ob_HSLU_Cut coordinates)
-#   6 = cut_position_b    << Frame (in ob_HSLU_Cut coordinates)
-#   7 = beam_size         << String, one of "400" / "550" / "750" / "1000"
-#
-# Glue positions are NOT part of fab_data — they live in their own tree
-# (glue_planes_tree) so the per-element list can be variable length.
+#   1 = centerline        << Line along beam centerline (Welt-KS, design)
+#   2 = cut_plane_a       << Plane for first miter cut (Welt-KS, process)
+#   3 = cut_plane_b       << Plane for second miter cut (Welt-KS, process)
+#   4 = place_position    << Frame (in ob_HSLU_Place coordinates, fabrication)
+#   5 = cut_position_a    << Frame (in ob_HSLU_Cut coordinates, fabrication)
+#   6 = cut_position_b    << Frame (in ob_HSLU_Cut coordinates, fabrication)
+#   7 = stock_category    << String, one of "400" / "550" / "750" / "1000"
+#                             (= Rohlatten-Kategorie aus WoodStorage)
 #
 # ==============================================================================
 # OUTPUT
@@ -47,13 +52,15 @@
 # STLs are written in grip-center-local coordinates so the BeamSimulator
 # SmartComponent can attach them at the gripper TCP without any transform.
 
+import json
 import os
 import struct
+import uuid
 from datetime import datetime
 
 import System
 import compas
-from compas.geometry import Frame, Point, Vector
+from compas.geometry import Frame, Line, Point, Vector
 
 import Rhino
 import Rhino.Geometry as rg
@@ -63,28 +70,55 @@ from Grasshopper.Kernel.Data import GH_Path
 
 
 # ==============================================================================
-# Index mapping: JSON side
+# Schema
 # ==============================================================================
-INDEX_MAP = {
-    4: "place_position",
-    5: "cut_position_a",
-    6: "cut_position_b",
+SCHEMA_VERSION = "tes-v4"
+PIPELINE_VERSION = "tes-mini 0.2.0"
+TARGET_CELL = "hslu_rrc_tes-mini"
+
+# Default-Configuration als PoC-Stand-In, falls kein configuration_json eingespeist
+# wird. Die echte Anbindung ans messe-platform-Frontend liefert diese Section
+# spaeter ueber den optionalen String-Input.
+DEFAULT_CONFIGURATION = {
+    "project_name": "facade_default",
+    "frame_size_mm": [600, 2500],
+    "beam_section_mm": 25,
+    "structural": None,
+    "grid": None,
+    "materials": {
+        "wood_species": "spruce",
+        "glue_type": "hot_melt",
+    },
+    "stock": {
+        "lengths_mm": [400, 550, 750, 1000],
+    },
 }
-BEAM_SIZE_INDEX = 7
+
+ACTIONS = ("pick", "cut", "glue", "place")
 
 # ==============================================================================
-# Index mapping: STL side
+# Branch-Index mapping (fab_data DataTree)
 # ==============================================================================
 BREP_INDEX = 0
 CENTERLINE_INDEX = 1
-CUT_PLANE_A_INDEX = 2
-CUT_PLANE_B_INDEX = 3
+CUT_PLANE_A_WORLD_INDEX = 2
+CUT_PLANE_B_WORLD_INDEX = 3
+PLACE_POSITION_INDEX = 4
+CUT_POSITION_A_INDEX = 5
+CUT_POSITION_B_INDEX = 6
+STOCK_CATEGORY_INDEX = 7
+
+FABRICATION_FRAME_MAP = {
+    PLACE_POSITION_INDEX: "place_position",
+    CUT_POSITION_A_INDEX: "cut_position_a",
+    CUT_POSITION_B_INDEX: "cut_position_b",
+}
 
 # ==============================================================================
 # Geometry configuration
 # ==============================================================================
 BEAM_SECTION = 25.0                        # mm (must match globals.py)
-# Stock lengths per beam_size category (must match VALID_CATEGORIES in
+# Stock lengths per stock_category category (must match VALID_CATEGORIES in
 # process/_skills/WoodStorage/wood_storage.py).
 STOCK_LENGTHS = {
     "400":  400.0,
@@ -92,7 +126,7 @@ STOCK_LENGTHS = {
     "750":  750.0,
     "1000": 1000.0,
 }
-VALID_BEAM_SIZES = tuple(STOCK_LENGTHS.keys())
+VALID_STOCK_CATEGORIES = tuple(STOCK_LENGTHS.keys())
 MESH_MIN_EDGE = 0.5
 MESH_MAX_EDGE = 50.0
 SPLIT_TOLERANCE = 0.01
@@ -149,6 +183,30 @@ def to_compas_frame(plane):
         Vector(plane.XAxis.X, plane.XAxis.Y, plane.XAxis.Z),
         Vector(plane.YAxis.X, plane.YAxis.Y, plane.YAxis.Z),
     )
+
+
+def to_compas_line(line):
+    """rg.Line/LineCurve -> compas.geometry.Line (oder None)."""
+    if line is None:
+        return None
+    if isinstance(line, rg.LineCurve):
+        line = line.Line
+    if not isinstance(line, rg.Line):
+        return None
+    return Line(
+        Point(line.FromX, line.FromY, line.FromZ),
+        Point(line.ToX, line.ToY, line.ToZ),
+    )
+
+
+def parse_configuration(configuration_json_str):
+    """Parse optional JSON string, fall back to DEFAULT_CONFIGURATION."""
+    if not configuration_json_str:
+        return dict(DEFAULT_CONFIGURATION)
+    try:
+        return json.loads(configuration_json_str)
+    except (ValueError, TypeError):
+        return dict(DEFAULT_CONFIGURATION)
 
 
 # ==============================================================================
@@ -363,7 +421,7 @@ def export_brep_as_stl(brep, to_local, file_path):
 # Validation
 # ==============================================================================
 
-def validate_element_basic(element, layer_idx, elem_idx):
+def validate_fabrication_element(element, layer_idx, elem_idx):
     warnings = []
     prefix = "L{} E{}".format(layer_idx, elem_idx)
 
@@ -371,10 +429,10 @@ def validate_element_basic(element, layer_idx, elem_idx):
         if field not in element:
             warnings.append("{}: '{}' fehlt!".format(prefix, field))
 
-    beam_size = element.get("beam_size", "")
-    if beam_size not in VALID_BEAM_SIZES:
-        warnings.append("{}: beam_size '{}' ungueltig (erlaubt: {})".format(
-            prefix, beam_size, ", ".join(VALID_BEAM_SIZES)))
+    stock_category = element.get("stock_category", "")
+    if stock_category not in VALID_STOCK_CATEGORIES:
+        warnings.append("{}: stock_category '{}' ungueltig (erlaubt: {})".format(
+            prefix, stock_category, ", ".join(VALID_STOCK_CATEGORIES)))
 
     place = element.get("place_position")
     if place is not None:
@@ -388,24 +446,110 @@ def validate_element_basic(element, layer_idx, elem_idx):
 
 
 # ==============================================================================
+# Compact-Geometry JSON Writer
+# ==============================================================================
+# Pretty-print mit indent=4, aber compas-geometry Frames/Lines/Points/Vectors
+# als 1-Liner. Reduziert das File von ~42k auf ~6k Zeilen ohne Information zu
+# verlieren - compas.json_load liest beide Formate identisch.
+
+class _OneLine(object):
+    """Marker: wickelt einen Dict so dass der Encoder ihn als 1-Liner schreibt."""
+    def __init__(self, data):
+        self.data = data
+
+
+def _wrap_geometry(obj):
+    """Wickelt rekursiv alle compas.geometry/*-dicts in _OneLine."""
+    if isinstance(obj, dict):
+        if str(obj.get("dtype", "")).startswith("compas.geometry/"):
+            return _OneLine(obj)
+        return {k: _wrap_geometry(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_wrap_geometry(v) for v in obj]
+    return obj
+
+
+class _PlaceholderEncoder(json.JSONEncoder):
+    """Schreibt _OneLine als Platzhalter-String, der spaeter durch eine
+    kompakte JSON-Repraesentation ersetzt wird."""
+    def __init__(self, *args, **kwargs):
+        super(_PlaceholderEncoder, self).__init__(*args, **kwargs)
+        self._compact = {}
+
+    def default(self, obj):
+        if isinstance(obj, _OneLine):
+            key = "@@COMPACT_{}@@".format(uuid.uuid4().hex)
+            self._compact[key] = json.dumps(obj.data, separators=(", ", ": "), sort_keys=True)
+            return key
+        return super(_PlaceholderEncoder, self).default(obj)
+
+
+def dump_pretty_with_compact_geometry(data, path, indent=4):
+    """Schreibt data als pretty JSON, aber compas-geometry Dicts in 1 Zeile.
+
+    Voraussetzung: data laeuft erst durch compas.json_dumps, damit Frame-
+    Objekte zu dtype-dicts werden. Danach wrap + custom encode.
+    """
+    json_str = compas.json_dumps(data, pretty=False)
+    plain = json.loads(json_str)
+    wrapped = _wrap_geometry(plain)
+    enc = _PlaceholderEncoder(indent=indent, sort_keys=True)
+    rendered = enc.encode(wrapped)
+    for placeholder, compact in enc._compact.items():
+        rendered = rendered.replace('"{}"'.format(placeholder), compact)
+    with open(path, "w") as f:
+        f.write(rendered)
+
+
+# ==============================================================================
+# Section builders (tes-v4 SSOT)
+# ==============================================================================
+
+def element_ref(layer_idx, elem_idx):
+    return "L{}_E{}".format(layer_idx, elem_idx)
+
+
+def build_manifest():
+    return {
+        "manifest_id": str(uuid.uuid4()),
+        "created_at": datetime.now().isoformat(),
+        "pipeline_version": PIPELINE_VERSION,
+        "schema_version": SCHEMA_VERSION,
+    }
+
+
+def build_initial_state(all_refs):
+    return {
+        "run_id": None,
+        "started_at": None,
+        "last_updated_at": None,
+        "elements": {
+            ref: {action: {"status": "pending"} for action in ACTIONS}
+            for ref in all_refs
+        },
+        "errors": [],
+    }
+
+
+# ==============================================================================
 # STL export for a single element
 # ==============================================================================
 
-def export_element_stls(branch, beam_size, layer_idx, elem_idx, geometry_folder):
+def export_element_stls(branch, stock_category, layer_idx, elem_idx, geometry_folder):
     """Export raw/cutA/cutB STLs for one element. Returns (n_files, errors)."""
     prefix = "L{}_E{}".format(layer_idx, elem_idx)
     errors = []
 
     finished_brep = to_brep(branch[BREP_INDEX]) if BREP_INDEX < len(branch) else None
     centerline = to_line(branch[CENTERLINE_INDEX]) if CENTERLINE_INDEX < len(branch) else None
-    cut_plane_a = to_plane_geom(branch[CUT_PLANE_A_INDEX]) if CUT_PLANE_A_INDEX < len(branch) else None
+    cut_plane_a = to_plane_geom(branch[CUT_PLANE_A_WORLD_INDEX]) if CUT_PLANE_A_WORLD_INDEX < len(branch) else None
 
     if finished_brep is None or centerline is None or cut_plane_a is None:
         errors.append("{} STL: missing brep/centerline/cut_plane_a".format(prefix))
         return 0, errors
 
-    if beam_size not in VALID_BEAM_SIZES:
-        errors.append("{} STL: invalid beam_size '{}'".format(prefix, beam_size))
+    if stock_category not in VALID_STOCK_CATEGORIES:
+        errors.append("{} STL: invalid stock_category '{}'".format(prefix, stock_category))
         return 0, errors
 
     grip_center, grip_plane, to_local = make_grip_frame(centerline)
@@ -413,7 +557,7 @@ def export_element_stls(branch, beam_size, layer_idx, elem_idx, geometry_folder)
     n_files = 0
 
     # Raw beam
-    raw_brep = make_raw_brep(grip_plane, beam_size)
+    raw_brep = make_raw_brep(grip_plane, stock_category)
     raw_path = os.path.join(geometry_folder, "{}_raw.stl".format(prefix))
     ok, n_tri, msg = export_brep_as_stl(raw_brep, to_local, raw_path)
     if ok:
@@ -471,8 +615,13 @@ if update:
     for layer, count in sorted(elements_per_layer.items()):
         log.append("  Layer {}: {} Elemente".format(layer, count))
 
-    # Build layers (JSON) and export STLs in one pass
-    layers = []
+    # Build sections (JSON) and export STLs in one pass
+    design_layers = []
+    fabrication_layers = []
+    process_cut_planes_world = []
+    process_glue_planes_world = []
+    all_refs = []
+
     total_elements = 0
     total_stl_files = 0
     all_warnings = []
@@ -483,62 +632,99 @@ if update:
         log.append("")
         log.append("Verarbeite Layer {} ({} Elemente)...".format(layer_idx, n_elements))
 
-        elements = []
+        design_elements = []
+        fabrication_elements = []
 
         for elem_idx in range(n_elements):
             branch = get_branch(fab_data, GH_Path(layer_idx, elem_idx))
+            ref = element_ref(layer_idx, elem_idx)
+            all_refs.append(ref)
 
-            element = {"id": elem_idx}
+            # stock_category (string) — gehoert in design + fabrication
+            stock_category = ""
+            if STOCK_CATEGORY_INDEX < len(branch) and branch[STOCK_CATEGORY_INDEX] is not None:
+                stock_category = str(branch[STOCK_CATEGORY_INDEX])
 
-            # beam_size (string)
-            if BEAM_SIZE_INDEX < len(branch) and branch[BEAM_SIZE_INDEX] is not None:
-                element["beam_size"] = str(branch[BEAM_SIZE_INDEX])
+            # --- design: centerline (Welt-KS) + length_mm
+            design_element = {"id": elem_idx, "stock_category": stock_category}
+            if CENTERLINE_INDEX < len(branch):
+                line = to_compas_line(to_line(branch[CENTERLINE_INDEX]))
+                if line is not None:
+                    design_element["centerline"] = line
+                    design_element["finished_length_mm"] = line.length
+            design_elements.append(design_element)
 
-            # Position frames
-            for idx, pos_name in INDEX_MAP.items():
+            # --- process: cut_planes_world (Welt-KS, vor Reorient)
+            cut_a_world = to_compas_frame(to_plane_geom(branch[CUT_PLANE_A_WORLD_INDEX])) \
+                if CUT_PLANE_A_WORLD_INDEX < len(branch) else None
+            cut_b_world = to_compas_frame(to_plane_geom(branch[CUT_PLANE_B_WORLD_INDEX])) \
+                if CUT_PLANE_B_WORLD_INDEX < len(branch) else None
+            if cut_a_world is not None or cut_b_world is not None:
+                process_cut_planes_world.append({
+                    "element_ref": ref,
+                    "plane_a": cut_a_world,
+                    "plane_b": cut_b_world,
+                })
+
+            # --- process: glue_planes_world (Welt-KS, vor Reorient)
+            # Auch leere Listen schreiben, damit Konsistenz zu fabrication.glue_positions
+            # gegeben ist (jedes Element hat einen Eintrag, ggf. mit planes=[]).
+            glue_world_branch = get_branch(glue_planes_world_tree, GH_Path(layer_idx, elem_idx))
+            glue_world_planes = [
+                f for f in (to_compas_frame(p) for p in glue_world_branch) if f is not None
+            ]
+            process_glue_planes_world.append({
+                "element_ref": ref,
+                "planes": glue_world_planes,
+            })
+
+            # --- fabrication: heutiges fab_data 1:1 (Workobject-Koordinaten)
+            fab_element = {"id": elem_idx, "stock_category": stock_category}
+            for idx, pos_name in FABRICATION_FRAME_MAP.items():
                 if idx < len(branch):
                     frame = to_compas_frame(branch[idx])
                     if frame is not None:
-                        element[pos_name] = frame
-
-            # Glue positions: variable-length list from glue_planes_tree.
-            # Empty branch / missing tree -> empty list (= no gluing for this element).
-            glue_branch = get_branch(glue_planes_tree, GH_Path(layer_idx, elem_idx))
-            element["glue_positions"] = [
-                f for f in (to_compas_frame(p) for p in glue_branch) if f is not None
+                        fab_element[pos_name] = frame
+            glue_wobj_branch = get_branch(glue_planes_tree, GH_Path(layer_idx, elem_idx))
+            fab_element["glue_positions"] = [
+                f for f in (to_compas_frame(p) for p in glue_wobj_branch) if f is not None
             ]
 
-            warnings = validate_element_basic(element, layer_idx, elem_idx)
+            warnings = validate_fabrication_element(fab_element, layer_idx, elem_idx)
             all_warnings.extend(warnings)
 
-            elements.append(element)
+            fabrication_elements.append(fab_element)
 
-            # STL export (index 11 as single source of truth for beam_size)
-            beam_size = element.get("beam_size", "")
+            # STL export
             n_stl, errs = export_element_stls(
-                branch, beam_size, layer_idx, elem_idx, geometry_folder
+                branch, stock_category, layer_idx, elem_idx, geometry_folder
             )
             total_stl_files += n_stl
             stl_errors.extend(errs)
 
-        if elements:
-            log.append("  Keys: {}".format(list(elements[0].keys())))
+        design_layers.append({"id": layer_idx, "elements": design_elements})
+        fabrication_layers.append({"id": layer_idx, "elements": fabrication_elements})
+        total_elements += len(fabrication_elements)
 
-        layers.append({"id": layer_idx, "elements": elements})
-        total_elements += len(elements)
+        if fabrication_elements:
+            log.append("  Fabrication-Keys: {}".format(list(fabrication_elements[0].keys())))
 
-    # Build export structure
+    # Build SSOT export structure
+    configuration = parse_configuration(configuration_json)
     export_data = {
-        "layers": layers,
-        "metadata": {
-            "created": datetime.now().isoformat(),
-            "layer_count": len(layers),
-            "total_element_count": total_elements,
-            "version": "3.0",
-            "project": "facade",
-            "frame_size": [600, 2500],
-            "beam_section": 25,
+        "manifest": build_manifest(),
+        "configuration": configuration,
+        "design": {"layers": design_layers},
+        "process": {
+            "cut_planes_world": process_cut_planes_world,
+            "glue_planes_world": process_glue_planes_world,
         },
+        "fabrication": {
+            "target_cell": TARGET_CELL,
+            "cell_config_ref": None,
+            "layers": fabrication_layers,
+        },
+        "state": build_initial_state(all_refs),
     }
 
     # Warnings
@@ -554,21 +740,24 @@ if update:
         for e in stl_errors:
             log.append("  - " + e)
 
-    # Write JSON
-    compas.json_dump(export_data, file_path, pretty=True)
+    # Write JSON (pretty mit kompakten Frame/Line-1-Linern)
+    dump_pretty_with_compact_geometry(export_data, file_path)
 
     # Summary
     log.append("")
-    log.append("JSON: {}".format(file_path))
+    log.append("JSON (tes-v4 SSOT): {}".format(file_path))
+    log.append("  manifest, configuration, design, process, fabrication, state")
+    log.append("  process.cut_planes_world: {}".format(len(process_cut_planes_world)))
+    log.append("  process.glue_planes_world: {}".format(len(process_glue_planes_world)))
     log.append("STLs: {} ({} files)".format(geometry_folder, total_stl_files))
-    for layer in layers:
+    for layer in fabrication_layers:
         log.append("  Layer {}: {} Elemente".format(layer["id"], len(layer["elements"])))
 
     suffix = ""
     if all_warnings or stl_errors:
         suffix = " ({} warnings, {} stl errors)".format(len(all_warnings), len(stl_errors))
 
-    output = "Done - {} elements, {} STLs{}".format(
+    output = "Done (tes-v4) - {} elements, {} STLs{}".format(
         total_elements, total_stl_files, suffix
     )
 
