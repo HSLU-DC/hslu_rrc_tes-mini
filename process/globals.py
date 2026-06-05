@@ -27,7 +27,7 @@ TOOL_GRIPPER = 't_HSLU_GripperZimmer'  # Zimmer pneumatic gripper
 # Each station has its own work object with a coordinate system calibrated
 # to the station's physical position. The pick station work objects are
 # defined per beam size in wood_storage.json (not here).
-W_OBJ_CUT = 'ob_HSLU_Cut'
+W_OBJ_CUT = 'ob_HSLU_Cut_Top'
 W_OBJ_GLUE = 'ob_HSLU_Glue'
 W_OBJ_PLACE = 'ob_HSLU_Place'
 
