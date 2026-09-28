@@ -1,0 +1,128 @@
+MODULE HSLU_CI_TriggL
+    !************************************************                                                                                                                                                  
+    ! Function    :     Glue TriggL - Move with glue trigger
+    ! Programmer  :     HSLU
+    ! Date        :     2025.01
+    !***************** HSLU *************************
+    !
+    PROC r_RRC_CI_GlueTriggL()
+        VAR triggdata trigGlueOn;
+        VAR triggdata trigGlueOff;
+        VAR num nTriggerDist;
+        !
+        ! Read and set robtarget (V1-V7: pos+orient, V8-V13: extax)
+        ! Pass "L" as move type (linear)
+        r_RRC_RASRobtarget\stMoveType:="L";
+        !
+        ! Read and set tcp speed (V14)
+        r_RRC_RasTCPSpeed bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V14;
+        !
+        ! Read trigger distance (V15) - mm before target to turn valve ON
+        nTriggerDist:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V15;
+        !
+        ! Define triggers
+        TriggIO trigGlueOn,nTriggerDist\DOp:=do_IO2_GlueValveOpen,1;
+        TriggIO trigGlueOff,0\DOp:=do_IO2_GlueValveOpen,0;
+        !
+        ! Execute TriggL with fixed zone z5
+        ConfL\Off;
+        TriggL p_RRC_Act,v_RRC_Act,trigGlueOn\T2:=trigGlueOff,z1,t_RRC_Act\WObj:=ob_RRC_Act;
+        ConfL\On;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+        TRYNEXT;
+    ENDPROC
+        !
+    !************************************************
+    ! Function    :     Label TriggL - Move with label printer trigger
+    ! Programmer  :     HSLU
+    ! Date        :     2026.01
+    ! Description :     Position-based label printer control using TriggIO
+    !                   Trigger ON at trigger_dist before target, OFF at target
+    !
+    ! Parameters from Python:
+    !   V1-V3:  position (x, y, z)
+    !   V4-V7:  orientation (q1, q2, q3, q4)
+    !   V8-V13: external axes (9E+09 = use current)
+    !   V14:    speed (mm/s)
+    !   V15:    trigger distance (mm before target to trigger printer)
+    !   St1:    zone value as string (-1=FINE, 5=Z5, 10=Z10, etc.)
+    !
+    ! Usage from Python:
+    !   lable_trigg_move(r1, frame, speed=50, trigger_dist=50, zone=1)
+    !
+    !***************** HSLU *************************
+    !
+    PROC r_RRC_CI_LableTriggL()
+        VAR triggdata trigLableOn;
+        VAR triggdata trigLableOff;
+        VAR num nTriggerDist;
+        VAR num nZone;
+        VAR bool bOk;
+        !
+        ! Read and set robtarget (V1-V7: pos+orient, V8-V13: extax)
+        r_RRC_RASRobtarget\stMoveType:="L";
+        !
+        ! Read and set tcp speed (V14)
+        r_RRC_RasTCPSpeed bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V14;
+        !
+        ! Read trigger distance (V15) - mm before target to turn trigger ON
+        nTriggerDist:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V15;
+        !
+        ! Read zone from St1 and set z_RRC_Act
+        bOk:=StrToVal(bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.St1,nZone);
+        r_RRC_RasZone nZone;
+        !
+        ! Define triggers for label printer
+        TriggIO trigLableOn,nTriggerDist\DOp:=do_IO2_LableTrigger,1;
+        TriggIO trigLableOff,0\DOp:=do_IO2_LableTrigger,0;
+        !
+        ! Execute TriggL with zone from parameter
+        ConfL\Off;
+        TriggL p_RRC_Act,v_RRC_Act,trigLableOn\T2:=trigLableOff,z_RRC_Act,t_RRC_Act\WObj:=ob_RRC_Act;
+        ConfL\On;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Generate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+        TRYNEXT;
+    ENDPROC
+ENDMODULE

@@ -1,0 +1,95 @@
+MODULE HSLU_EAx
+
+    !************************************************
+    ! Declaration :     num
+    !************************************************
+    !
+    TASK PERS num n_HSLU_EAxAcc:=100;
+    TASK PERS num n_HSLU_EAxDec:=100;
+    TASK PERS num n_HSLU_EAxSpeed:=500;
+    TASK PERS num n_HSLU_EAxTargetPos:=25000;
+
+    !************************************************
+    ! Function    :     Move track to position
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2025.10.20
+    !***************** ETH Zurich *******************
+    !
+    PROC r_HSLU_EAxMove()
+        !
+        ! Read motion settings
+        n_HSLU_EAxAcc:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V1;
+        n_HSLU_EAxDec:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V2;
+        n_HSLU_EAxSpeed:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V3;
+        n_HSLU_EAxTargetPos:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V4*10;
+        !
+        ! ToDo: Senetiy check
+
+        !
+        ! Set motion settings
+        SetGO go_PLC1_EAxAcceleration,n_HSLU_EAxAcc;
+        SetGO go_PLC1_EAxDeceleration,n_HSLU_EAxDec;
+        SetGO go_PLC1_EAxSpeed,n_HSLU_EAxSpeed;
+        SetGO go_PLC1_EAxTargetPos,n_HSLU_EAxTargetPos;
+        !
+        ! Only move for new positions
+        ! IF NOT n_HSLU_EAxTargetPos=GInput(gi_PLC1_EAxActPos) THEN
+        !
+        ! Check if axis is ready
+        WaitDI di_PLC1_EAxReady,1\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait for external axis redy signal.",
+                            "Close door and reset errors."]
+                \Icon:=iconInfo;
+        !
+        ! Start motion
+        SetDO do_PLC1_EAxMove,1;
+        !
+        ! Check for motion started
+        WaitDI di_PLC1_EAxInPos,0\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait for motion.",
+                            "Close door and reset errors."]
+                \Icon:=iconInfo;
+        !
+        ! Check for motion finished
+        WaitDI di_PLC1_EAxInPos,1\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait until the motion done.",
+                            ""]
+                \Icon:=iconInfo;
+        !
+        ! Finish motion handshanke
+        SetDO do_PLC1_EAxMove,0;
+        !ENDIF
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        !
+        ! Handle missing IO connection error
+        IF ERRNO=ERR_NO_ALIASIO_DEF THEN
+            !
+            ! Re-initialize gripper
+            r_Gudel_HSLU_TrackMoInit\NoRRC;
+            !
+            ! Retry the failed instruction
+            RETRY;
+        ENDIF
+    ENDPROC
+
+ENDMODULE

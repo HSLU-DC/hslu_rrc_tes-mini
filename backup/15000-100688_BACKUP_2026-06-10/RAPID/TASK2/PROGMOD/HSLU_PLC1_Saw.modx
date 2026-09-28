@@ -1,0 +1,96 @@
+MODULE HSLU_PLC1_Saw
+    
+    !************************************************
+    ! Function    :     SawOn
+    ! Programmer  :     Juri Jerg
+    ! Date        :     2025.12.29
+    !******************** HSLU **********************
+    !
+    PROC r_HSLU_SawOn()
+        !
+        ! Check if saw is ready
+        WaitDI di_PLC1_SawReady,1\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait for saw ready signal.",
+                            "Close door and reset errors."]
+                \Icon:=iconInfo;
+                
+        ! Turn saw on
+        SetDO do_PLC1_SawOn,1;
+        
+        ! Turn vacuum on
+        SetDO do_IO2_PowerOutlet1,1;
+        
+        ! Check if saw turned on
+        WaitDI di_PLC1_SawOn,1\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Saw did not turn on.",
+                            "Close door and reset errors."]
+                \Icon:=iconInfo;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done 
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported  
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+    
+    
+        !************************************************
+    ! Function    :     SawOff
+    ! Programmer  :     Juri Jerg
+    ! Date        :     2025.12.29
+    !******************** HSLU **********************
+    !
+    PROC r_HSLU_SawOff()
+        !
+        ! Turn saw off
+        SetDO do_PLC1_SawOn,0;
+        
+        ! Turn vacuum ff
+        SetDO do_IO2_PowerOutlet1,0;
+        
+        ! Check if saw still running
+        WaitDI di_PLC1_SawOn,0\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Saw is still running.",
+                            "Major Error!"]
+                \Icon:=iconInfo;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done 
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported  
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+
+ENDMODULE

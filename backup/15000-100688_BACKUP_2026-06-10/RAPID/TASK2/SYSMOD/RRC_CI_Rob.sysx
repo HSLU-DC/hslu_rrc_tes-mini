@@ -1,0 +1,331 @@
+MODULE RRC_CI_Rob(SYSMODULE)
+    !***********************************************************************************
+    !
+    ! ETH Zurich / Robotic Fabrication Lab
+    ! HIB C 13 / Stefano-Franscini-Platz 1
+    ! CH-8093 Zurich
+    !
+    !***********************************************************************************
+    !
+    ! PROJECT     :  RRC - Rapid Robot Communication
+    !
+    ! FUNCTION    :  Custom Instracion Library  
+    !
+    ! AUTHOR      :  Philippe Fleischmann
+    !
+    ! EMAIL       :  rrc@arch.ethz.ch
+    !
+    ! HISTORY     :  yyyy.mm.dd
+    !
+    !***********************************************************************************
+    
+    !************************************************
+    ! Function    :     RRC Custom Instruction Cartisien Soft Servo
+    ! Programmer  :     Philippe Fleischmann
+    ! Version     :     1.0.0
+    !***************** ETH Zurich *******************
+    !
+    PROC r_RRC_CI_CSS()
+        !
+        ! Local variables
+        VAR string stAction;
+        VAR string stCSSDirection;
+        VAR string stCSSMove;
+        !
+        ! Reset action
+        stAction:="None";
+        !
+        ! Read current action from robot buffer
+        stAction:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.St1;
+        !
+        ! Select current action
+        TEST stAction
+        CASE "Define":
+            !
+            ! Read soft servo direction from robot buffer
+            stCSSDirection:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.St2;
+            !
+            ! Set soft direction
+            TEST stCSSDirection
+            CASE "CSS_X":
+                !
+                ! 1 = X direction
+                cssdAct:=CSS_X;
+                !
+            CASE "CSS_Y":
+                !
+                ! 2 = Y direction
+                cssdAct:=CSS_Y;
+                !
+            CASE "CSS_Z":
+                !
+                ! 3 = Z direction
+                cssdAct:=CSS_Z;
+                !
+            CASE "CSS_XY":
+                !
+                ! 4 = XY plane
+                cssdAct:=CSS_XY;
+                !
+            CASE "CSS_XZ":
+                !
+                ! 5 = XZ plane
+                cssdAct:=CSS_XZ;
+                !
+            CASE "CSS_YZ":
+                !
+                ! 6 = YZ plane
+                cssdAct:=CSS_YZ;
+                !
+            CASE "CSS_XYZ":
+                !
+                ! 7 = all linear directions (but no rotational)
+                cssdAct:=CSS_XYZ;
+                !
+            CASE "CSS_XYRZ":
+                !
+                ! 8 = XY plane and rotational around the Z axis
+                cssdAct:=CSS_XYRZ;
+                !
+            CASE "CSS_ARM_ANGLE":
+                !
+                ! 9 = Arm angle (only for 7-axis robots)
+                cssdAct:=CSS_ARM_ANGLE;
+                !
+            DEFAULT:
+                !
+                ! Current mode not handled here; only process event message
+                ErrWrite\W,"RRC_CI_CSS:"+" Current CSS mode not handled","Mode = "+stCSSDirection;
+                !
+            ENDTEST
+            !
+            ! Set stiffness non soft directions
+            nCSSStiffnessNonSoftDir:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V1;
+            !
+            ! Set stiffness soft directions
+            nCSSStiffness:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V2;
+            !
+            ! Set how fast the softness is implemented, as a percentage of the value set by the system parameter Activation smoothness time
+            nCSSRamp:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V3;
+            !
+            ! User information
+            ErrWrite\I,
+                "RRC_CI_CSS: Define",
+                "";
+        CASE "On":
+            !
+            ! Check soft direction value [1..9]
+            IF cssdAct=1 OR cssdAct=2 OR cssdAct=3 OR cssdAct=4 OR cssdAct=5 OR cssdAct=6 OR cssdAct=7 OR cssdAct=8 OR cssdAct=9 THEN
+                !
+                ! Check stiffness non soft direction value [0..500]
+                IF nCSSStiffnessNonSoftDir>=0 AND nCSSStiffnessNonSoftDir<=500 THEN
+                    !
+                    ! Check stiffness soft direction value [0..500]
+                    IF nCSSStiffness>=0 AND nCSSStiffness<=500 THEN
+                        !
+                        ! Check activation ramp value [0..500]
+                        IF nCSSRamp>=0 AND nCSSRamp<=500 THEN
+                            !
+                            ! Read current action from robot buffer
+                            stCSSMove:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.St2;
+                            !
+                            ! Check for movment setting
+                            IF stCSSMove="AllowMove" THEN
+                                !
+                                ! Activate cartesian soft servo with movement instructions
+                                CSSAct cssdAct\StiffnessNonSoftDir:=nCSSStiffnessNonSoftDir\Stiffness:=nCSSStiffness\AllowMove\Ramp:=nCSSRamp;
+                                !
+                                ! User information
+                                ErrWrite\I,
+                                "RRC_CI_CSS: With movement activated",
+                                "Current mode                : "+NumToStr(cssdAct,2)
+                                \RL2:="Stiffness non soft direction: "+NumToStr(nCSSStiffnessNonSoftDir,2)+" [%]",
+                                \RL3:="Stiffness soft direction    : "+NumToStr(nCSSStiffness,2)+" [%]",
+                                \RL4:="Activation ramp             : "+NumToStr(nCSSRamp,2)+" [%]";
+                            ELSE
+                                !
+                                ! Activate cartesian soft servo without movement instructions
+                                CSSAct cssdAct\StiffnessNonSoftDir:=nCSSStiffnessNonSoftDir\Stiffness:=nCSSStiffness\Ramp:=nCSSRamp;
+                                !
+                                ! User information
+                                ErrWrite\I,
+                                "RRC_CI_CSS: Without movement",
+                                "Current mode                : "+NumToStr(cssdAct,2)
+                                \RL2:="Stiffness non soft direction: "+NumToStr(nCSSStiffnessNonSoftDir,2)+" [%]",
+                                \RL3:="Stiffness soft direction    : "+NumToStr(nCSSStiffness,2)+" [%]",
+                                \RL4:="Activation ramp             : "+NumToStr(nCSSRamp,2)+" [%]";
+                            ENDIF
+                        ELSE
+                            !
+                            ! Activation ramp not correct defined
+                            ErrWrite\W,
+                            "RRC_CI_CSS: Activation failed. Ramp value out of range",
+                            "Range 0–500% current value. "+NumToStr(nCSSRamp,2);
+                            !
+                        ENDIF
+                    ELSE
+                        !
+                        ! Stiffnes not correct defined
+                        ErrWrite\W,
+                            "RRC_CI_CSS: Activation failed. Stiffness value out of range",
+                            "Range 0–500% current value. "+NumToStr(nCSSStiffness,2);
+                        !
+                    ENDIF
+                ELSE
+                    !
+                    ! Stiffnes non soft direction not correct defined
+                    ErrWrite\W,
+                        "RRC_CI_CSS: Activation failed. Stiffness non soft direction out of range",
+                        "Range 0–500% current value: "+NumToStr(nCSSStiffnessNonSoftDir,2);
+                    !
+                ENDIF
+            ELSE
+                !
+                ! Soft direction not correct defined
+                ErrWrite\W,
+                    "RRC_CI_CSS: Activation failed. Soft direction out of range",
+                    "Range 1–9 current value: "+NumToStr(cssdAct,2);
+                !
+            ENDIF
+            !
+        CASE "Off":
+            !
+            ! Deactivate Cartesian Soft Servo
+            CSSDeact;
+            !
+            ! User information
+            ErrWrite\I,
+                "RRC_CI_CSS: Off",
+                "";
+        DEFAULT:
+            !
+            ! Action not handled here; only process event message
+            ErrWrite\W,"RRC_CI_CSS:"+" Current action not handled","Action = "+stAction;
+            !
+        ENDTEST
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+        TRYNEXT;
+    ENDPROC
+    
+    !************************************************
+    ! Function    :     RRC Custom Instruction GripLoad
+    ! Programmer  :     Philippe Fleischmann
+    ! Version     :     1.0.0
+    !***************** ETH Zurich *******************
+    !
+    PROC r_RRC_CI_GripLoad()
+        !
+        ! Local variables
+        VAR string stAction;
+        !
+        ! Reset action
+        stAction:="None";
+        !
+        ! Read current action from robot buffer
+        stAction:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.St1;
+        !
+        ! Select current action
+        TEST stAction
+        CASE "Define":
+            !
+            ! Define loaddata
+            !
+            ! Set the mass (weight) of the load in kg
+            ld_RRC_Act.mass:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V1;
+            !
+            ! Set the center of gravity of the payload expressed in mm
+            ld_RRC_Act.cog.x:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V2;
+            ld_RRC_Act.cog.y:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V3;
+            ld_RRC_Act.cog.z:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V4;
+            !
+            ! Set the orientation of the axes of moment
+            ld_RRC_Act.aom.q1:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V5;
+            ld_RRC_Act.aom.q2:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V6;
+            ld_RRC_Act.aom.q3:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V7;
+            ld_RRC_Act.aom.q4:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V8;
+            !
+            ! Set the moment of inertia of the load around the x-axis of moment expressed in kgm2
+            ld_RRC_Act.ix:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V9;
+            ld_RRC_Act.iy:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V10;
+            ld_RRC_Act.iz:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V11;
+            !
+            ! User information
+            ErrWrite\I,
+                "RRC_CI_GripLoad: Grip load define",
+                "";
+            !
+        CASE "On":
+            !
+            ! Activate the defined load
+            GripLoad ld_RRC_Act;
+            !
+            ! User information
+            ErrWrite\I,
+                "RRC_CI_GripLoad: Grip load on",
+                      "Mass                  : "+NumToStr(ld_RRC_Act.mass,2)+" [kg]",
+                \RL2:="Center of gravity     : "+NumToStr(ld_RRC_Act.cog.x,2)+" "+NumToStr(ld_RRC_Act.cog.y,2)+" "+NumToStr(ld_RRC_Act.cog.z,2)+" [mm]",
+                \RL3:="Axes of moment q1..q4 : "+NumToStr(ld_RRC_Act.aom.q1,0)+" "+NumToStr(ld_RRC_Act.aom.q2,2)+" "+NumToStr(ld_RRC_Act.aom.q3,2)+" "+NumToStr(ld_RRC_Act.aom.q4,2),
+                \RL4:="Inertia xyz           : "+NumToStr(ld_RRC_Act.ix,2)+" "+NumToStr(ld_RRC_Act.iy,2)+" "+NumToStr(ld_RRC_Act.iz,2)+" [kgm2]";
+            !
+        CASE "Off":
+            !
+            ! Deactivate the defined load
+            GripLoad load0;
+            !
+            ! User information
+            ErrWrite\I,
+                "RRC_CI_GripLoad: Grip load off",
+                "";
+            !
+        DEFAULT:
+            !
+            ! Action not handled here; only process event message
+            ErrWrite\W,"RRC_CI_GripLoad:"+" Current action not handled","Action = "+stAction;
+            !
+        ENDTEST
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+        TRYNEXT;
+    ENDPROC
+ENDMODULE

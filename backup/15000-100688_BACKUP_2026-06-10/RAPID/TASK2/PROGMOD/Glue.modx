@@ -1,0 +1,208 @@
+MODULE Glue
+    !************************************************
+    ! Glue Pulse CustomInstructions for Main Task (T_ROB1)
+    !
+    ! These procedures control the background task via PERS variables.
+    ! Add this code to your RRC_User module or HSLU module.
+    !
+    ! Required: Background task T_GLUE running HSLU_GluePulse_Task module
+    !************************************************
+
+    !************************************************
+    ! Declaration :     Reference to shared PERS variables
+    !                   (defined in HSLU_GluePulse_Task)
+    !************************************************
+    !
+    ! Note: These are declared in the background task module.
+    ! If you get "not defined" errors, add these declarations:
+    !
+    PERS bool bGluePulseActive;
+    PERS num nGluePulseOnTime;
+    PERS num nGluePulseOffTime;
+
+    !************************************************
+    ! Function    :     RRC CI Glue Pulse Control
+    ! Programmer  :     HSLU
+    ! Date        :     2025.01
+    ! Description :     Start/Stop time-based glue pulsing
+    !
+    ! Parameters from Python:
+    !   St1: Action ("Start" or "Stop")
+    !   V1:  On time in milliseconds (only for Start)
+    !   V2:  Off time in milliseconds (only for Start)
+    !***************** HSLU *************************
+    !
+    PROC r_RRC_CI_GluePulseCtrl()
+        VAR string stAction;
+        !
+        ! Read action from buffer
+        stAction := bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.St1;
+        !
+        ! Execute action
+        TEST stAction
+        CASE "Start":
+            !
+            ! Read timing parameters (convert ms to seconds)
+            nGluePulseOnTime := bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V1 / 1000;
+            nGluePulseOffTime := bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V2 / 1000;
+            !
+            ! Activate pulsing
+            bGluePulseActive := TRUE;
+            !
+            ! Log
+            ErrWrite\I, "GluePulse: Started",
+                "On=" + NumToStr(nGluePulseOnTime*1000, 0) + "ms " +
+                "Off=" + NumToStr(nGluePulseOffTime*1000, 0) + "ms";
+            !
+        CASE "Stop":
+            !
+            ! Deactivate pulsing
+            bGluePulseActive := FALSE;
+            !
+            ! Make sure valve is off
+            SetDO do_IO2_GlueValveOpen, 0;
+            !
+            ! Log
+            ErrWrite\I, "GluePulse: Stopped", "";
+            !
+        DEFAULT:
+            !
+            ! Unknown action
+            ErrWrite\W, "GluePulse: Unknown action", "Action=" + stAction;
+            !
+        ENDTEST
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev > 0 THEN
+            !
+            ! Generate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN;
+    ERROR
+        ! Placeholder for Error Code...
+        TRYNEXT;
+    ENDPROC
+    
+    !************************************************
+    ! Function    :     Glue Line - Move with pulsing glue
+    ! Programmer  :     HSLU
+    ! Date        :     2025.01
+    ! Description :     Executes a linear glue line with time-based pulsing.
+    !                   All in one RAPID call - no Python latency issues.
+    !
+    ! Parameters from Python (same layout as MoveToFrame):
+    !   V1-V3:  Start position (x, y, z)
+    !   V4-V7:  Orientation (q1, q2, q3, q4)
+    !   V8-V13: External axes (9E+09 = use current)
+    !   V14:    Speed in mm/s
+    !   V15:    Pulse OFF time in ms
+    !   V16:    Acceleration distance in mm (move without pulsing first)
+    !   St1:    X-Offset in mm (e.g. "-30" for 30mm in -X direction)
+    !   St2:    Pulse ON time in ms
+    !
+    ! Requires: Background task T_GLUE running with PERS variables:
+    !   - bGluePulseActive (bool)
+    !   - nGluePulseOnTime (num, seconds)
+    !   - nGluePulseOffTime (num, seconds)
+    !***************** HSLU *************************
+    !
+    PROC r_RRC_CI_GlueLine()
+        VAR robtarget pEnd;
+        VAR robtarget pAccelEnd;
+        VAR num nOffsetX;
+        VAR num nAccelDist;
+        VAR num nSign;
+        VAR bool bOk;
+        
+        !
+        ! Reuse existing robtarget parser (V1-V7: pos+orient, V8-V13: extax)
+        r_RRC_RASRobtarget\stMoveType:="L";
+        !
+        ! Read speed (V14) - reuse existing parser
+        r_RRC_RasTCPSpeed bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V14;
+        !
+        ! Read X offset from St1
+        bOk := StrToVal(bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.St1, nOffsetX);
+        !
+        ! Read pulse times and set for background task
+        bOk := StrToVal(bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.St2, nGluePulseOnTime);
+        nGluePulseOnTime := nGluePulseOnTime / 1000;  ! Convert ms to seconds
+        nGluePulseOffTime := bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V15 / 1000;
+        !
+        ! Read acceleration distance (V16) - move without pulsing first
+        nAccelDist := 5;
+        !
+        ! Calculate direction sign
+        IF nOffsetX >= 0 THEN
+            nSign := 1;
+        ELSE
+            nSign := -1;
+        ENDIF
+        !
+        ! Calculate end point (p_RRC_Act is start, add X offset)
+        pEnd := p_RRC_Act;
+        pEnd.trans.x := p_RRC_Act.trans.x + nOffsetX;
+        !
+        ! Move to start position
+        ConfL\Off;
+        MoveL p_RRC_Act, v_RRC_Act, fine, t_RRC_Act \WObj:=ob_RRC_Act;
+        !
+        ! Acceleration phase (move without pulsing)
+        IF nAccelDist > 0 THEN
+            pAccelEnd := p_RRC_Act;
+            pAccelEnd.trans.x := p_RRC_Act.trans.x + (nSign * nAccelDist);
+            MoveL pAccelEnd, v_RRC_Act, z1, t_RRC_Act \WObj:=ob_RRC_Act;
+        ENDIF
+        !
+        ! Start pulsing (background task picks this up)
+        bGluePulseActive := TRUE;
+        !
+        ! Execute glue line (remaining distance)
+        MoveL pEnd, v_RRC_Act, fine, t_RRC_Act \WObj:=ob_RRC_Act;
+        !
+        ! Stop pulsing
+        bGluePulseActive := FALSE;
+        SetDO do_IO2_GlueValveOpen, 0;
+        ConfL\On;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev > 0 THEN
+            !
+            ! Generate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN;
+    ERROR
+        ! Safety: stop pulsing on error
+        bGluePulseActive := FALSE;
+        SetDO do_IO2_GlueValveOpen, 0;
+        TRYNEXT;
+    ENDPROC
+
+
+ENDMODULE

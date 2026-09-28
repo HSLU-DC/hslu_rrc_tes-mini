@@ -1,0 +1,33 @@
+MODULE HSLU_Tools
+    !***********************************************************************************
+    !
+    ! Digital Construction
+    ! Hochschule Luzern - Technik & Architektur
+    ! Technikumstrasse 21
+    ! CH-6048 Horw
+    !
+    !***********************************************************************************
+    !
+    ! PROJECT     :  Swissbau
+    !
+    ! FUNCTION    :  Tooldata
+    !
+    ! AUTHOR      :  Juri Jerg
+    !
+    ! EMAIL       :  juri.jerg@hslu.ch
+    !
+    ! HISTORY     :  2025.12.28
+    !
+    ! Copyright   :  HSLU (2025)
+    !
+    !***********************************************************************************
+    
+    !************************************************
+    ! Declaration :     tooldata
+    !************************************************
+    !
+    TASK PERS tooldata t_HSLU_Spike := [TRUE,[[0,0,200],[1,0,0,0]],[0.901,[0,0,4],[1,0,0,0],0,0,0]];
+    TASK PERS tooldata t_HSLU_GripperZimmer := [TRUE,[[0,0,193.96],[0.707106781,0,0,0.707106781]],[3,[0,0,4],[1,0,0,0],0,0,0]];
+    
+
+ENDMODULE

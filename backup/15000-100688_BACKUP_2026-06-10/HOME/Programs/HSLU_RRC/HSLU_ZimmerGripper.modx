@@ -1,0 +1,103 @@
+MODULE HSLU_ZimmerGripper
+
+    !************************************************
+    ! Declaration :     num
+    !************************************************
+    !
+    TASK PERS num n_GripPulseTime:=0.20;
+
+    !************************************************
+    ! Function    :     Gripper Init
+    ! Programmer  :     Juri Jerg
+    ! Date        :     2025.12.27
+    !******************** HSLU **********************
+    !
+    PROC r_HSLU_GripperInit()
+        !
+        ! Safe state: both coils off -> closed center hold
+        SetDO do_IO2_GripperOpen,0;
+        SetDO do_IO2_GripperClose,0;
+        !
+    ENDPROC
+    
+    
+    !************************************************
+    ! Function    :     Gripper open (5/3 closed center, impulse)
+    ! Programmer  :     Juri Jerg
+    ! Date        :     2025.12.27
+    !******************** HSLU **********************
+    !
+    PROC r_HSLU_GripperOpen()
+        !
+        ! Initialize
+        r_HSLU_GripperInit;
+        !
+        ! Open impulse
+        SetDO do_IO2_GripperOpen,1;
+        WaitTime n_GripPulseTime;
+        SetDO do_IO2_GripperOpen,0;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done 
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported  
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+
+
+    !************************************************
+    ! Function    :     Gripper open (5/3 closed center, impulse)
+    ! Programmer  :     Juri Jerg
+    ! Date        :     2025.12.27
+    !******************** HSLU **********************
+    !
+    PROC r_HSLU_GripperClose()
+        !
+        ! Initialize
+        r_HSLU_GripperInit;
+        !
+        ! Open impulse
+        SetDO do_IO2_GripperClose,1;
+        WaitTime n_GripPulseTime;
+        SetDO do_IO2_GripperClose,0;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done 
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported  
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+
+ENDMODULE

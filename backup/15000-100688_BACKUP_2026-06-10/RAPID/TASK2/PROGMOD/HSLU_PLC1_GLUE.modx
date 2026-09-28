@@ -1,0 +1,80 @@
+MODULE HSLU_PLC1_GLUE
+      !************************************************
+  ! Module      :     HSLU_Glue
+  ! Programmer  :     Juri Jerg
+  ! Date        :     2025.01
+  ! Description :     Glue system control with PLC safety handshake
+  !******************** HSLU **********************
+
+      !************************************************
+      ! Function    :     GlueOn
+      ! Programmer  :     Juri Jerg
+      ! Date        :     2025.01
+      !******************** HSLU **********************
+      !
+      PROC r_HSLU_GlueOn()
+          !
+          ! Check if glue system is ready (safety cell closed and locked)
+          WaitDI di_PLC1_GlueReady,1\Visualize\Header:=st_HSLU_Header
+                  \MsgArray:=["Wait for glue ready signal.",
+                              "Close door and reset errors."]
+                  \Icon:=iconInfo;
+
+          ! Turn glue system on
+          SetDO do_PLC1_GlueOn,1;
+
+          ! Check if glue system turned on
+          WaitDI di_PLC1_GlueOn,1\Visualize\Header:=st_HSLU_Header
+                  \MsgArray:=["Glue system did not turn on.",
+                              "Check glue system and reset errors."]
+                  \Icon:=iconInfo;
+          !
+          ! Feedback
+          IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+              TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+              CASE 1:
+                  r_RRC_FDone;
+              DEFAULT:
+                  r_RRC_FError;
+              ENDTEST
+              r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+          ENDIF
+          RETURN;
+      ERROR
+          ! Placeholder for Error Code...
+      ENDPROC
+
+
+      !************************************************
+      ! Function    :     GlueOff
+      ! Programmer  :     Juri Jerg
+      ! Date        :     2025.01
+      !******************** HSLU **********************
+      !
+      PROC r_HSLU_GlueOff()
+          !
+          ! Turn glue system off
+          SetDO do_PLC1_GlueOn,0;
+
+          ! Check if glue system stopped
+          WaitDI di_PLC1_GlueOn,0\Visualize\Header:=st_HSLU_Header
+                  \MsgArray:=["Glue system is still running.",
+                              "Major Error!"]
+                  \Icon:=iconInfo;
+          !
+          ! Feedback
+          IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+              TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+              CASE 1:
+                  r_RRC_FDone;
+              DEFAULT:
+                  r_RRC_FError;
+              ENDTEST
+              r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+          ENDIF
+          RETURN;
+      ERROR
+          ! Placeholder for Error Code...
+      ENDPROC
+
+ENDMODULE

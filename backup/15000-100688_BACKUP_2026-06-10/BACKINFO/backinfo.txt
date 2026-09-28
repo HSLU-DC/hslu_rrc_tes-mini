@@ -1,0 +1,145 @@
+#
+# Generated backup file, do not edit.
+#
+# Originally at: /user/TEMP/backup.450217
+# 2026-06-10  17:51:34
+#
+>>SYSTEM_ID:
+15000-100688
+
+>>PRODUCTS_ID:
+RobotOS Version: 17.3.0
+RobotControl Version: 7.19.3
+FlexPendantSoftwareUpdate Version: 1.20.2
+Robots Version: 1.19.2
+Wizard Version: 1.6.0
+ASI Version: 1.0.8
+CollaborativeSpeedControl Version: 1.3.0
+RobatechVision Version: 1.0.0-Build026
+
+  RobotControl Base
+  German
+  3024-1 EtherNet/IP Scanner
+  UDPUC Driver
+  3100-1 Advanced Robot Motion
+  3106-1 World Zones
+  3113-1 Path Recovery
+  3123-1 Path Corrections
+  3108-1 SoftMove
+  3107-1 Collision Detection
+  3150-1 Collision Avoidance
+  3116-1 FTP and SFTP client
+  3119-1 RobotStudio Connect
+  3120-2 FlexPendant Essential App Package
+  3151-1 FlexPendant Program Package
+  3121-1 RW Add-In Prepared
+  3114-1 Multitasking
+  3124-1 Externally Guided Motion (EGM)
+  3043-3 SafeMove Collaborative
+  Safe Move Plug and Play
+  3044-2 Keyless Mode Switch, 2 modes
+  3018-1 Hot Swappable FlexPendant
+  3127-1 Integrated Vision Interface
+  Leadthrough
+  No Category 0
+  C30
+  C30 Type A
+  System without axis computer
+  Main computer M28.01
+  D10 (for CRB 15000)
+  Motor Commutation
+  Service Info System
+  Robots Base
+  CRB 15000-10/1.52
+  Wizard
+  ASI
+  Collaborative Speed Control Base
+  Robatech Vision add-in (RCS)
+
+>>HOME:
+All public files and directories
+
+>>SYSPAR:
+SYS.cfg
+SIO.cfg
+PROC.cfg
+MMC.cfg
+MOC.cfg
+EIO.cfg
+
+
+
+>>TASK2: (T_ROB1,HSLU_RRC,)
+SYSMOD/GOFA_ASI_Procedures.sysx @ 
+PROGMOD/Gudel_HSLU_CobotMover.modx @ 
+PROGMOD/Glue.modx @ 
+PROGMOD/HSLU_Data.modx @ 
+PROGMOD/Wizard_LoadData.modx @ 
+PROGMOD/HSLU_CI_TriggL.modx @ 
+PROGMOD/HSLU_Workobject.modx @ 
+PROGMOD/HSLU_CI_SoftAct.modx @ 
+SYSMOD/RRC_DataRecord.sysx @ 
+PROGMOD/HSLU_PLC1.modx @ 
+PROGMOD/HSLU_ZimmerGripper.modx @ 
+SYSMOD/RRC_Control_Rob.sysx @ 
+SYSMOD/RRC_Base_DataTask_Rob.sysx @ 
+SYSMOD/RRC_CI_Rob.sysx @ 
+SYSMOD/RRC_Base_Feedback_Rob.sysx @ 
+SYSMOD/RRC_Base_Instructions_Rob.sysx @ 
+SYSMOD/RRC_Base_Utilities_Rob.sysx @ 
+SYSMOD/RRC_DataTask_Rob.sysx @ 
+SYSMOD/RRC_Helper_Rob.sysx @ 
+SYSMOD/RRC_UserInteraction_Rob.sysx @ 
+PROGMOD/Calib_t_HSLU_GripperZimmer1.modx @ 
+SYSMOD/RRC_DataGlobal.sysx @ 
+SYSMOD/Wizard_Params.sysx @ 
+PROGMOD/HSLU_EAx.modx @ 
+PROGMOD/HSLU_PLC1_GLUE.modx @ 
+SYSMOD/RobatechData.sysx @ 
+PROGMOD/RRC_Main.modx @ 
+PROGMOD/HSLU_Tools.modx @ 
+PROGMOD/HSLU_PLC1_Saw.modx @ 
+PROGMOD/RRC_User.modx @ 
+
+>>TASK3: (T_GOFA_LED,,)
+SYSMOD/GOFA_Main.sysx @ 
+
+>>TASK4: (T_CTRL,,)
+SYSMOD/RRC_DataRecord.sysx @ 
+SYSMOD/RRC_UserInteraction.sysx @ 
+PROGMOD/RRC_Main.modx @ 
+SYSMOD/RRC_Base_Feedback_Ctrl.sysx @ 
+SYSMOD/RRC_Base_Instructions_Ctrl.sysx @ 
+SYSMOD/RRC_Control_Ctrl.sysx @ 
+SYSMOD/RRC_DataGlobal_Ctrl.sysx @ 
+SYSMOD/RRC_DataTask_Ctrl.sysx @ 
+SYSMOD/RRC_EULA_Ctrl.sysx @ 
+SYSMOD/RRC_Helper_Ctrl.sysx @ 
+SYSMOD/RRC_Config_Ctrl.sysx @ 
+
+>>TASK5: (T_RX,,)
+SYSMOD/RRC_Control_Rx.sysx @ 
+SYSMOD/RRC_DataTask_Rx.sysx @ 
+SYSMOD/RRC_Log_Rx.sysx @ 
+SYSMOD/RRC_Receiver_Rx.sysx @ 
+SYSMOD/RRC_DataRecord.sysx @ 
+SYSMOD/RRC_DataGlobal.sysx @ 
+SYSMOD/RRC_UserInteraction.sysx @ 
+PROGMOD/RRC_Main.modx @ 
+SYSMOD/RRC_License_RW7.sysx @ 
+
+>>TASK6: (T_TX,,)
+SYSMOD/RRC_DataRecord.sysx @ 
+SYSMOD/RRC_Control_Tx.sysx @ 
+SYSMOD/RRC_DataTask_Tx.sysx @ 
+SYSMOD/RRC_Transmitter_Tx.sysx @ 
+SYSMOD/RRC_DataGlobal.sysx @ 
+SYSMOD/RRC_UserInteraction.sysx @ 
+PROGMOD/RRC_Main.modx @ 
+SYSMOD/RRC_License_RW7.sysx @ 
+
+>>TASK7: (T_GLUE,,)
+PROGMOD/HSLU_GluePulse_Task.modx @ 
+
+
+>>EOF:

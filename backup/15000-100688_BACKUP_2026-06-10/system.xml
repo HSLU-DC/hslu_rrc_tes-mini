@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SystemProperties>
+  <SystemName>15000-100688</SystemName>
+  <SerialNo>15000-100688</SerialNo>
+  <UsedMedia>
+    <Media path="RobotOS_17.3.0" name="RobotOS" version="17.3.0+9" versionName="17.3.0"/>
+    <Media path="RobotControl_7.19.3" name="RobotControl" version="7.19.3+930" versionName="7.19.3"/>
+    <Media path="Apps_1.20.2" name="FlexPendantSoftwareUpdate" version="1.20.2+1458" versionName="1.20.2"/>
+    <Media path="Robots_1.19.2" name="Robots" version="1.19.2+130" versionName="1.19.2"/>
+    <Media path="Wizard_1.6.0" name="Wizard" version="1.6.0" versionName="1.6.0"/>
+    <Media path="ASI_1.0.8" name="ASI" version="1.0.8" versionName="1.0.8"/>
+    <Media path="CollaborativeSpeedControl_1.3.0" name="CollaborativeSpeedControl" version="1.3.0" versionName="1.3.0"/>
+    <Media path="RobatechVision_1.0.0-Build026" name="RobatechVision" version="1.0.0-Build026" versionName="1.0.0-Build026"/>
+  </UsedMedia>
+  <ControlModule>
+    <Option descr="RobotControl Base"/>
+    <Option descr="German"/>
+    <Option descr="3024-1 EtherNet/IP Scanner"/>
+    <Option descr="UDPUC Driver"/>
+    <Option descr="3100-1 Advanced Robot Motion"/>
+    <Option descr="3106-1 World Zones"/>
+    <Option descr="3113-1 Path Recovery"/>
+    <Option descr="3123-1 Path Corrections"/>
+    <Option descr="3108-1 SoftMove"/>
+    <Option descr="3107-1 Collision Detection"/>
+    <Option descr="3150-1 Collision Avoidance"/>
+    <Option descr="3116-1 FTP and SFTP client"/>
+    <Option descr="3119-1 RobotStudio Connect"/>
+    <Option descr="3120-2 FlexPendant Essential App Package"/>
+    <Option descr="3151-1 FlexPendant Program Package"/>
+    <Option descr="3121-1 RW Add-In Prepared"/>
+    <Option descr="3114-1 Multitasking"/>
+    <Option descr="3124-1 Externally Guided Motion (EGM)"/>
+    <Option descr="3043-3 SafeMove Collaborative"/>
+    <Option descr="Safe Move Plug and Play"/>
+    <Option descr="3044-2 Keyless Mode Switch, 2 modes"/>
+    <Option descr="3018-1 Hot Swappable FlexPendant"/>
+    <Option descr="3127-1 Integrated Vision Interface"/>
+    <Option descr="Leadthrough"/>
+    <Option descr="No Category 0"/>
+  </ControlModule>
+  <DriveModule>
+    <Name>Robot1</Name>
+    <Option descr="C30"/>
+    <Option descr="C30 Type A"/>
+    <Option descr="System without axis computer"/>
+    <Option descr="Main computer M28.01"/>
+    <Option descr="D10 (for CRB 15000)"/>
+    <Option descr="Motor Commutation"/>
+    <Option descr="Service Info System"/>
+  </DriveModule>
+  <AdditionalOption>
+    <Name>FlexPendantSoftwareUpdate</Name>
+  </AdditionalOption>
+  <AdditionalOption>
+    <Name>Robots</Name>
+    <Option descr="Robots Base"/>
+    <Option descr="CRB 15000-10/1.52"/>
+  </AdditionalOption>
+  <AdditionalOption>
+    <Name>Wizard</Name>
+    <Option descr="Wizard"/>
+  </AdditionalOption>
+  <AdditionalOption>
+    <Name>ASI</Name>
+    <Option descr="ASI"/>
+  </AdditionalOption>
+  <AdditionalOption>
+    <Name>CollaborativeSpeedControl</Name>
+    <Option descr="Collaborative Speed Control Base"/>
+  </AdditionalOption>
+  <AdditionalOption>
+    <Name>RobatechVision</Name>
+    <Option descr="Robatech Vision add-in (RCS)"/>
+  </AdditionalOption>
+</SystemProperties>

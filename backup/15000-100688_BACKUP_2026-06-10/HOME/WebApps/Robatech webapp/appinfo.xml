@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<WebApp>
+    <name>Robatech</name>
+    <icon>Robatech Sign.png</icon>
+    <path>index.html</path>
+</WebApp>
+
+

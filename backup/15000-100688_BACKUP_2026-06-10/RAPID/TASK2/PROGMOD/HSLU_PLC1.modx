@@ -1,0 +1,55 @@
+MODULE HSLU_PLC1
+
+    !************************************************
+    ! Function    :     Initialize Variables
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2019.02.22
+    !***************** ETH Zurich *******************
+    !
+    PROC r_HSLU_PLC1_SignalReset()
+        !
+        ! Handshak with PLC about App initialization
+        SetDo do_PLC1_RobAppInit,1;
+        !
+        ! Reset signals
+        SetDo do_PLC1_Output8,0;
+        SetDo do_PLC1_Output9,0;
+        SetDo do_PLC1_Output10,0;
+        SetDo do_PLC1_Output11,0;
+        SetDo do_PLC1_Output12,0;
+        SetDo do_PLC1_DoorProcessLock,0;
+        SetDo do_PLC1_Output14,0;
+        SetDo do_PLC1_Output15,0;
+        SetDo do_PLC1_Output16,0;
+        SetDo do_PLC1_EAxMove,0;
+        SetDo do_PLC1_EAxJogPos,0;
+        SetDo do_PLC1_EAxJogNeg,0;
+        SetDo do_PLC1_Output20,0;
+        SetDo do_PLC1_Output21,0;
+        SetDo do_PLC1_Output22,0;
+        SetDo do_PLC1_Output23,0;
+        SetDo do_PLC1_Output24,0;
+        SetDo do_PLC1_SawOn,0;
+        SetDo do_PLC1_GlueOn,0;
+        SetDo do_PLC1_Output27,0;
+        SetDo do_PLC1_Output28,0;
+        SetDo do_PLC1_Output29,0;
+        SetDo do_PLC1_Output30,0;
+        SetDo do_PLC1_Output31,0;
+        SetDo do_PLC1_Output32,0;
+        !
+        ! Init handshake
+        WaitDI di_PLC1_PlcAppInitDone,1\Visualize\Header:=st_HSLU_Header
+            \MsgArray:=["Waiting for PLC signal",
+                        "to finish the initalization Handshak"]
+            \Icon:=iconInfo;
+        !
+        ! Handshake done
+        SetDo do_PLC1_RobAppInit,0;
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+
+
+ENDMODULE

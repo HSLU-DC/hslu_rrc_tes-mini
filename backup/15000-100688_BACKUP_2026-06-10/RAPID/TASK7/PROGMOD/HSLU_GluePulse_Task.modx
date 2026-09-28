@@ -1,0 +1,72 @@
+MODULE HSLU_GluePulse_Task
+    !***********************************************************************************
+    !
+    ! HSLU - Hochschule Luzern
+    !
+    !***********************************************************************************
+    !
+    ! PROJECT     :  Glue Pulse Background Task
+    !
+    ! FUNCTION    :  Time-based glue valve pulsing independent of robot motion
+    !                This module runs in a separate background task (e.g. T_GLUE)
+    !
+    ! AUTHOR      :  HSLU
+    !
+    ! DATE        :  2025.01
+    !
+    ! DESCRIPTION :  The main task (T_ROB1) sets bGluePulseActive to TRUE/FALSE.
+    !                This task continuously pulses the glue valve while active.
+    !
+    !***********************************************************************************
+
+    !************************************************
+    ! Declaration :     Shared PERS variables
+    !                   (accessible from main task)
+    !************************************************
+    !
+    ! Control flag - set by main task
+    PERS bool bGluePulseActive := FALSE;
+    !
+    ! Pulse timing parameters (in seconds)
+    PERS num nGluePulseOnTime := 0.01;      ! Valve open time (default 100ms)
+    PERS num nGluePulseOffTime := 0.02;    ! Valve closed time (default 50ms)
+
+    !************************************************
+    ! Function    :     Main entry point for background task
+    ! Programmer  :     HSLU
+    ! Date        :     2025.01
+    !***************** HSLU *************************
+    !
+    PROC main()
+        !
+        ! Initialize - make sure valve is off
+        SetDO do_IO2_GlueValveOpen, 0;
+        !
+        ! Endless loop - task runs forever
+        WHILE TRUE DO
+            !
+            ! Check if pulsing is active
+            IF bGluePulseActive THEN
+                
+                WaitTime 0.05;
+                !
+                ! Valve ON
+                SetDO do_IO2_GlueValveOpen, 1;
+                WaitTime nGluePulseOnTime;
+                !
+                ! Valve OFF
+                SetDO do_IO2_GlueValveOpen, 0;
+                !
+                ! Only wait off-time if still active (allows faster stop)
+                IF bGluePulseActive THEN
+                    WaitTime nGluePulseOffTime;
+                ENDIF
+            ELSE
+                !
+                ! Not active - small wait to reduce CPU load
+                WaitTime 0.01;
+            ENDIF
+        ENDWHILE
+    ENDPROC
+
+ENDMODULE

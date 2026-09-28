@@ -1,0 +1,725 @@
+MODULE Gudel_HSLU_CobotMover
+    !***********************************************************************************
+    !
+    ! ETH Zurich / Robotic Fabrication Lab
+    ! HIB C 13 / Stefano-Franscini-Platz 1
+    ! CH-8093 Zurich
+    !
+    !***********************************************************************************
+    !
+    ! PROJECT     :  COMPAS_RRC Training TowerStacking
+    !
+    ! FUNCTION    :  Modul for Gudel Track (CobotMover) tools
+    !
+    ! AUTHOR      :  Philippe Fleischmann
+    !
+    ! EMAIL       :  rrc@arch.TrackMotion
+    !
+    ! Date        :  2025.10.20
+    !
+    ! Copyright   :  ETH Zurich (CH) 2025
+    !                - Philippe Fleischmann (RFL)
+    !
+    !***********************************************************************************
+
+    !************************************************
+    ! Declaration :     bool
+    !************************************************
+    !
+    CONST bool b_TrackMoLogOn:=TRUE;
+
+    !************************************************
+    ! Declaration :     num
+    !************************************************
+    !
+    CONST num n_Gudel_HSLU_TrackMinPos:=0;
+    CONST num n_Gudel_HSLU_TrackMaxPos:=2900;
+    CONST num n_Gudel_HSLU_TrackMinSpeed:=1;
+    CONST num n_Gudel_HSLU_TrackMaxSpeed:=2000;
+    !
+    TASK PERS num n_Gudel_HSLU_TrackActPosition_m:=0;
+    TASK PERS num n_Gudel_HSLU_TrackActPosition:=0;
+    !
+    ! Motion parmaeters for simulation
+    TASK PERS num n_Gudel_HSLU_TrackTargetPos:=700;
+    TASK PERS num n_Gudel_HSLU_TrackTargetPos_m:=3;
+    TASK PERS num n_Gudel_HSLU_TrackTargetPos_10mm:=25000;
+    TASK PERS num n_Gudel_HSLU_TrackTragetDuration:=6;
+    TASK PERS num n_Gudel_HSLU_TrackTargetSpeed:=1;
+    TASK PERS num n_Gudel_HSLU_TrackRelativDist:=0;
+    TASK PERS num n_Gudel_HSLU_TrackLastPos_m:=3;
+    !
+    TASK PERS num n_Gudel_HSLU_EAxAcc:=100;
+    TASK PERS num n_Gudel_HSLU_EAxDec:=100;
+    TASK PERS num n_Gudel_HSLU_EAxSpeed:=50;
+    TASK PERS num n_Gudel_HSLU_EAxTargetPos:=7000;
+    !
+    TASK PERS num n_Gudel_HSLU_TargetMotionTime:=2;
+    TASK PERS num n_Gudel_HSLU_TarMotTimeLiOver:=5;
+    TASK PERS num n_Gudel_HSLU_TrackActPos:=700;
+
+    !************************************************
+    ! Declaration :     signaldi
+    !************************************************
+    !
+    TASK PERS string st_n_Gudel_HSLU_Headre:="CoboMover";
+
+    !************************************************
+    ! Declaration :     signaldi
+    !************************************************
+    !
+    VAR signaldi di_Gudel_HSLU_TrackPosUpdated;
+    VAR signaldi di_Gudel_HSLU_TrackMotionDone;
+
+    !************************************************
+    ! Declaration :     signaldo
+    !************************************************
+    !
+    VAR signaldo do_Gudel_HSLU_TrackUpdatePos;
+    VAR signaldo do_Gudel_HSLU_TrackGetPos;
+    VAR signaldo do_Gudel_HSLU_TrackMotionStart;
+
+    !************************************************
+    ! Function    :     TrackMotion initialization
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2025.10.20
+    !***************** ETH Zurich *******************
+    !
+    PROC r_Gudel_HSLU_TrackMoInit(\switch NoRRC)
+        !
+        ! Set digital input signals
+        AliasIO diTrackPosUpdated,di_Gudel_HSLU_TrackPosUpdated;
+        AliasIO diTrackMotionDone,di_Gudel_HSLU_TrackMotionDone;
+        !
+        ! Set digital output signals
+        AliasIO doTrackUpdatePos,do_Gudel_HSLU_TrackUpdatePos;
+        AliasIO doTrackGetPos,do_Gudel_HSLU_TrackGetPos;
+        AliasIO doTrackMotionStart,do_Gudel_HSLU_TrackMotionStart;
+        !
+        ! Log message
+        IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" IO init done."," ";
+        !
+        ! If no _rrc call finish routine here
+        IF Present(NoRRC) RETURN ;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+
+    !************************************************
+    ! Function    :     TrackMotion reset signals
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2025.10.20
+    !***************** ETH Zurich *******************
+    !
+    PROC r_Gudel_HSLU_TrackMoResetSignal(\switch NoRRC)
+        !
+        ! Check for real or virtual robot
+        IF RobOS() THEN
+            !
+            ! Real robot execution
+            !
+            ! Reset Signals
+        ELSE
+            !
+            ! Virtual robot execution
+            !
+            ! Reset Signals
+            SetDO do_Gudel_HSLU_TrackUpdatePos,0;
+            SetDO do_Gudel_HSLU_TrackGetPos,0;
+            SetDO do_Gudel_HSLU_TrackMotionStart,0;
+            !
+            ! Check signal state low before moving on
+            WaitDI di_Gudel_HSLU_TrackPosUpdated,0;
+            WaitDI di_Gudel_HSLU_TrackMotionDone,0;
+        ENDIF
+        !
+        ! Log message
+        IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" Signal reset done."," ";
+        !
+        ! If no _rrc call finish routine here
+        IF Present(NoRRC) RETURN ;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        !
+        ! Handle missing IO connection error
+        IF ERRNO=ERR_NO_ALIASIO_DEF THEN
+            !
+            ! Re-initialize gripper
+            r_Gudel_HSLU_TrackMoInit\NoRRC;
+            !
+            ! Retry the failed instruction
+            RETRY;
+        ENDIF
+    ENDPROC
+
+    !************************************************
+    ! Function    :     TrackMotion update current postion
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2025.10.20
+    !***************** ETH Zurich *******************
+    !
+    PROC r_Gudel_HSLU_TrackMoUpdatePos(\switch NoRRC)
+        !
+        ! Update track postion in smart component cobot mover
+        SetDO do_Gudel_HSLU_TrackUpdatePos,1;
+        WaitTime 0.2;
+        SetDO do_Gudel_HSLU_TrackUpdatePos,0;
+        !
+        ! Request the current track positon
+        SetDO do_Gudel_HSLU_TrackGetPos,1;
+        !
+        ! Wait for feedback from smart component
+        WaitDI di_Gudel_HSLU_TrackPosUpdated,1;
+        !
+        ! Reset request
+        SetDO do_Gudel_HSLU_TrackGetPos,0;
+        WaitDI di_Gudel_HSLU_TrackPosUpdated,0;
+        !
+        ! Convert units from meters to millimeters
+        n_Gudel_HSLU_TrackActPosition:=n_Gudel_HSLU_TrackActPosition_m*1000;
+        !
+        ! Log current track position
+        IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" Current position: "+NumToStr(n_Gudel_HSLU_TrackActPosition,1)+" mm"," ";
+        !
+        ! If no _rrc call finish routine here
+        IF Present(NoRRC) RETURN ;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        !
+        ! Handle missing IO connection error
+        IF ERRNO=ERR_NO_ALIASIO_DEF THEN
+            !
+            ! Re-initialize gripper
+            r_Gudel_HSLU_TrackMoInit\NoRRC;
+            !
+            ! Retry the failed instruction
+            RETRY;
+        ENDIF
+    ENDPROC
+
+    !************************************************
+    ! Function    :     TrackMotion read target postion
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2025.10.20
+    !***************** ETH Zurich *******************
+    !
+    PROC r_Gudel_HSLU_TrackMoReadTarPos(num nTarget\switch NoRRC)
+        !
+        ! Read target positon form rrc
+        n_Gudel_HSLU_TrackTargetPos:=nTarget;
+        !
+        ! Check traget postion
+        IF n_Gudel_HSLU_TrackTargetPos<n_Gudel_HSLU_TrackMinPos THEN
+            !
+            ! Warning target track position to small
+            ErrWrite\W,st_n_Gudel_HSLU_Headre+" Target position too small: "+NumToStr(n_Gudel_HSLU_TrackTargetPos,1)+" mm"," ";
+            !
+            ! Overwrite target with minimum value
+            n_Gudel_HSLU_TrackTargetPos:=n_Gudel_HSLU_TrackMinPos;
+            !
+        ELSEIF n_Gudel_HSLU_TrackTargetPos>n_Gudel_HSLU_TrackMaxPos THEN
+            !
+            ! Warning target track position to big
+            ErrWrite\W,st_n_Gudel_HSLU_Headre+" Target position too big: "+NumToStr(n_Gudel_HSLU_TrackTargetPos,1)+" mm"," ";
+            !
+            ! Overwrite target with maximum value
+            n_Gudel_HSLU_TrackTargetPos:=n_Gudel_HSLU_TrackMaxPos;
+        ENDIF
+        !
+        ! Log target postion
+        ErrWrite\I,st_n_Gudel_HSLU_Headre+" Target position: "+NumToStr(n_Gudel_HSLU_TrackTargetPos,1)+" mm"," ";
+        !
+        ! Check for real or virtual robot
+        IF RobOS() THEN
+            !
+            ! Real robot execution
+            !
+            ! Convert units from meters to millimeters
+            ! n_Gudel_HSLU_TrackTargetPos_10mm:=n_Gudel_HSLU_TrackTargetPos*10;
+            ! IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" Target position: "+NumToStr(n_Gudel_HSLU_TrackTargetPos_10mm,3)+" 0.1 mm"," ";
+        ELSE
+            !
+            ! Virtual robot execution
+            !
+            ! Convert units from meters to millimeters
+            n_Gudel_HSLU_TrackTargetPos_m:=n_Gudel_HSLU_TrackTargetPos/1000;
+            IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" Target position: "+NumToStr(n_Gudel_HSLU_TrackTargetPos_m,3)+" m"," ";
+        ENDIF
+        !
+        ! If no _rrc call finish routine here
+        IF Present(NoRRC) RETURN ;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+
+    !************************************************
+    ! Function    :     TrackMotion read target speed
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2025.10.20
+    !***************** ETH Zurich *******************
+    !
+    PROC r_Gudel_HSLU_TrackMoReadTarSpeed(num nSpeed\switch NoRRC)
+        !
+        ! Read target speed form rrc
+        n_Gudel_HSLU_TrackTargetSpeed:=nSpeed;
+        !
+        ! Check traget speed
+        IF n_Gudel_HSLU_TrackTargetSpeed<n_Gudel_HSLU_TrackMinSpeed THEN
+            !
+            ! Warning target track speed to small
+            ErrWrite\W,st_n_Gudel_HSLU_Headre+" Target speed too small: "+NumToStr(n_Gudel_HSLU_TrackTargetSpeed,1)+" mm"," ";
+            !
+            ! Overwrite target with minimum value
+            n_Gudel_HSLU_TrackTargetSpeed:=n_Gudel_HSLU_TrackMinSpeed;
+            !
+        ELSEIF n_Gudel_HSLU_TrackTargetSpeed>n_Gudel_HSLU_TrackMaxSpeed THEN
+            !
+            ! Warning target track speed to big
+            ErrWrite\W,st_n_Gudel_HSLU_Headre+" Target speed too big: "+NumToStr(n_Gudel_HSLU_TrackTargetSpeed,1)+" mm"," ";
+            !
+            ! Overwrite target with maximum value
+            n_Gudel_HSLU_TrackTargetSpeed:=n_Gudel_HSLU_TrackMaxSpeed;
+        ENDIF
+        !
+        ! Log target speed
+        IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" Target speed: "+NumToStr(n_Gudel_HSLU_TrackTargetSpeed,1)+" mm/s"," ";
+        !
+        ! If no _rrc call finish routine here
+        IF Present(NoRRC) RETURN ;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+
+    !************************************************
+    ! Function    :     TrackMotion calculate motion data
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2025.10.20
+    !***************** ETH Zurich *******************
+    !
+    PROC r_Gudel_HSLU_TrackMoCalMoData(\switch NoRRC)
+        !
+        ! Check for real or virtual robot
+        IF RobOS() THEN
+            !
+            ! Real robot execution
+            !
+            ! Read current track postion in mm
+            n_Gudel_HSLU_TrackActPos:=GInput(gi_PLC1_EAxActPos)/10;
+            !
+            ! Calculate travel distance
+            n_Gudel_HSLU_TrackRelativDist:=Abs(n_Gudel_HSLU_TrackActPos-n_Gudel_HSLU_TrackTargetPos);
+            !
+            ! Calcultate track speed
+            n_Gudel_HSLU_TrackTargetSpeed:=Round(n_Gudel_HSLU_TrackRelativDist/(n_Gudel_HSLU_TargetMotionTime*100/CSpeedOverride())\Dec:=0);
+            !
+            IF n_Gudel_HSLU_TrackTargetSpeed<=n_Gudel_HSLU_TrackMinSpeed THEN
+                !
+                ! Use minimum speed
+                n_Gudel_HSLU_TrackTargetSpeed:=n_Gudel_HSLU_TrackMinSpeed;
+            ELSEIF n_Gudel_HSLU_TrackTargetSpeed>n_Gudel_HSLU_TrackMaxSpeed THEN
+                !
+                ! Use maximum speed
+                IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" Target speed to high for track: "+NumToStr(n_Gudel_HSLU_TrackTargetSpeed,1)+" mm/s"," ";
+                n_Gudel_HSLU_TrackTargetSpeed:=n_Gudel_HSLU_TrackMaxSpeed;
+                !
+                ! Update robot motion time with maximal track travel time
+                n_Gudel_HSLU_TargetMotionTime:=Round(n_Gudel_HSLU_TrackRelativDist/n_Gudel_HSLU_TrackMaxSpeed\Dec:=2);
+                IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" New robot motion time: "+NumToStr(n_Gudel_HSLU_TargetMotionTime,1)+" s"," ";
+            ENDIF
+            !
+            ! Set motion settings
+            SetGO go_PLC1_EAxAcceleration,Round(50*100/CSpeedOverride()\Dec:=0);
+            SetGO go_PLC1_EAxDeceleration,Round(50*100/CSpeedOverride()\Dec:=0);
+            SetGO go_PLC1_EAxSpeed,n_Gudel_HSLU_TrackTargetSpeed;
+            SetGO go_PLC1_EAxTargetPos,n_Gudel_HSLU_TrackTargetPos*10;
+        ELSE
+            !
+            ! Virtual robot execution
+            !
+            ! Calculatate relative distance
+            n_Gudel_HSLU_TrackRelativDist:=Abs(n_Gudel_HSLU_TrackActPosition-n_Gudel_HSLU_TrackTargetPos);
+            IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" Relative distance: "+NumToStr(n_Gudel_HSLU_TrackRelativDist,1)+" mm"," ";
+            !
+            ! Calculate motion time based on distance and speed (Formula: time = distance / speed)
+            n_Gudel_HSLU_TrackTragetDuration:=Round(n_Gudel_HSLU_TrackRelativDist/n_Gudel_HSLU_TrackTargetSpeed\Dec:=3);
+            IF b_TrackMoLogOn=TRUE ErrWrite\I,st_n_Gudel_HSLU_Headre+" Travel time: "+NumToStr(n_Gudel_HSLU_TrackTragetDuration,3)+" s"," ";
+        ENDIF
+        !
+        ! If no _rrc call finish routine here
+        IF Present(NoRRC) RETURN ;
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+
+    !************************************************
+    ! Function    :     Move track to position
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2025.10.20
+    !***************** ETH Zurich *******************
+    !
+    PROC r_Gudel_HSLU_MoveTrack()
+        !
+        ! Check for real or virtual robot
+        IF RobOS() THEN
+            !
+            ! Read motion settings
+            n_Gudel_HSLU_EAxAcc:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V1;
+            n_Gudel_HSLU_EAxDec:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V2;
+            n_Gudel_HSLU_EAxSpeed:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V3;
+            n_Gudel_HSLU_EAxTargetPos:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V4*10;
+            !
+            ! Set motion settings
+            SetGO go_PLC1_EAxAcceleration,n_Gudel_HSLU_EAxAcc;
+            SetGO go_PLC1_EAxDeceleration,n_Gudel_HSLU_EAxDec;
+            SetGO go_PLC1_EAxSpeed,n_Gudel_HSLU_EAxSpeed;
+            SetGO go_PLC1_EAxTargetPos,n_Gudel_HSLU_EAxTargetPos;
+            !
+            ! Only move for new positions
+            ! IF NOT n_HSLU_EAxTargetPos=GInput(gi_PLC1_EAxActPos) THEN
+            !
+            ! Check if axis is ready
+            WaitDI di_PLC1_EAxReady,1\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait for external axis redy signal.",
+                            "Close door and reset errors."]
+                \Icon:=iconInfo;
+            !
+            ! Start motion
+            SetDO do_PLC1_EAxMove,1;
+            !
+            ! Check for motion started
+            WaitDI di_PLC1_EAxInPos,0\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait for motion.",
+                            "Close door and reset errors."]
+                \Icon:=iconInfo;
+            !
+            ! Check for motion finished
+            WaitDI di_PLC1_EAxInPos,1\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait until the motion done.",
+                            ""]
+                \Icon:=iconInfo;
+            !
+            ! Finish motion handshanke
+            SetDO do_PLC1_EAxMove,0;
+        ELSE
+            !
+            ! Virtual robot execution
+            !
+            ! Reset Signals
+            r_Gudel_HSLU_TrackMoResetSignal\NoRRC;
+            !
+            ! Update track postion
+            r_Gudel_HSLU_TrackMoUpdatePos\NoRRC;
+            !
+            ! Read target positon form rrc protocol
+            r_Gudel_HSLU_TrackMoReadTarPos(bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V1);
+            !
+            ! Read target speed form rrc protocol
+            r_Gudel_HSLU_TrackMoReadTarSpeed(bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V2);
+            !
+            ! Calculate motion data
+            r_Gudel_HSLU_TrackMoCalMoData;
+            !
+            ! Start track motion
+            SetDO do_Gudel_HSLU_TrackMotionStart,1;
+            !
+            ! Wait for motion feedback
+            WaitDI di_Gudel_HSLU_TrackMotionDone,1;
+            !
+            ! Reset motion
+            SetDO do_Gudel_HSLU_TrackMotionStart,0;
+            WaitDI di_Gudel_HSLU_TrackMotionDone,0;
+            !
+            ! Save last postion
+            n_Gudel_HSLU_TrackLastPos_m:=n_Gudel_HSLU_TrackTargetPos_m;
+        ENDIF
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Cenerate feedback
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                !
+                ! Instruction done
+                r_RRC_FDone;
+            DEFAULT:
+                !
+                ! Feedback not supported
+                r_RRC_FError;
+            ENDTEST
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        !
+        ! Handle missing IO connection error
+        IF ERRNO=ERR_NO_ALIASIO_DEF THEN
+            !
+            ! Re-initialize gripper
+            r_Gudel_HSLU_TrackMoInit\NoRRC;
+            !
+            ! Retry the failed instruction
+            RETRY;
+        ENDIF
+    ENDPROC
+
+    !************************************************
+    ! Function    :     Move track and robot to joint postion
+    ! Programmer  :     Philippe Fleischmann
+    ! Date        :     2019.02.22
+    !***************** ETH Zurich *******************
+    !
+    PROC r_Gudel_HSLU_MoveToJoints()
+        !
+        ! Check for real or virtual robot
+        IF RobOS() THEN
+            !
+            ! Real robot execution
+            !
+            ! Robot
+            !
+            ! Read and set jonttarget
+            r_RRC_RasJointtarget;
+            !
+            ! Read target motion time
+            n_Gudel_HSLU_TargetMotionTime:=bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V13;
+            !
+            ! Read and set zone
+            r_RRC_RasZone bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V14;
+            !
+            ! Track
+            !
+            ! Reset Signals
+            r_Gudel_HSLU_TrackMoResetSignal\NoRRC;
+            !
+            ! Read target positon form rrc protocol
+            r_Gudel_HSLU_TrackMoReadTarPos(bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V7);
+            !
+            ! Calculate motion data
+            r_Gudel_HSLU_TrackMoCalMoData;
+            !
+            ! Check if axis is ready
+            WaitDI di_PLC1_EAxReady,1\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait for external axis redy signal.",
+                            "Close door and reset errors."]
+                \Icon:=iconInfo;
+            !
+            ! Start motion
+            SetDO do_PLC1_EAxMove,1;
+            !
+            ! Check for motion started
+            WaitDI di_PLC1_EAxInPos,0\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait for motion.",
+                            "Close door and reset errors."]
+                \Icon:=iconInfo;
+            !
+            ! Move robot with track duration speed
+            MoveAbsJ jp_RRC_Act,v_RRC_Act\T:=n_Gudel_HSLU_TargetMotionTime,z_RRC_Act,t_RRC_Act;
+            !
+            ! Check for motion finished
+            WaitDI di_PLC1_EAxInPos,1\Visualize\Header:=st_HSLU_Header
+                \MsgArray:=["Wait until the motion done.",
+                            ""]
+                \Icon:=iconInfo;
+            !
+            ! Finish motion handshanke
+            SetDO do_PLC1_EAxMove,0;
+        ELSE
+            !
+            ! Virtual robot execution
+            !
+            ! Robot
+            !
+            ! Read and set jonttarget
+            r_RRC_RasJointtarget;
+            !
+            ! Read and set tcp speed
+            r_RRC_RasTCPSpeed bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V13;
+            !
+            ! Read and set zone
+            r_RRC_RasZone bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V14;
+            !
+            ! Track
+            !
+            ! Reset Signals
+            r_Gudel_HSLU_TrackMoResetSignal\NoRRC;
+            !
+            ! Update track postion
+            r_Gudel_HSLU_TrackMoUpdatePos\NoRRC;
+            !
+            ! Read target positon form rrc protocol
+            r_Gudel_HSLU_TrackMoReadTarPos(bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V7);
+            ! r_Gudel_HSLU_TrackMoReadTarPos(jp_RRC_Act.extax.eax_a);
+            !
+            ! Read target speed form rrc protocol
+            r_Gudel_HSLU_TrackMoReadTarSpeed(bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V13);
+            !
+            ! Calculate motion data
+            r_Gudel_HSLU_TrackMoCalMoData;
+            !
+            ! Start track motion
+            SetDO do_Gudel_HSLU_TrackMotionStart,1;
+            !
+            ! Move robot with track duration speed
+            MoveAbsJ jp_RRC_Act,v_RRC_Act\T:=n_Gudel_HSLU_TrackTragetDuration,z_RRC_Act,t_RRC_Act;
+            !
+            ! Wait for motion feedback
+            WaitDI di_Gudel_HSLU_TrackMotionDone,1;
+            !
+            ! Reset motion
+            SetDO do_Gudel_HSLU_TrackMotionStart,0;
+            WaitDI di_Gudel_HSLU_TrackMotionDone,0;
+            !
+            ! Save last postion
+            n_Gudel_HSLU_TrackLastPos_m:=n_Gudel_HSLU_TrackTargetPos_m;
+        ENDIF
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            !
+            ! Instruction done
+            r_RRC_FDone;
+            !
+            ! Check additional feedback
+            IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>1 THEN
+                !
+                ! Cenerate feedback
+                TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+                DEFAULT:
+                    !
+                    ! Not defined
+                    !
+                    ! Feedback not supported
+                    r_RRC_FError;
+                ENDTEST
+            ENDIF
+            !
+            ! Move message in send buffer
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN ;
+    ERROR
+        ! Placeholder for Error Code...
+    ENDPROC
+
+ENDMODULE

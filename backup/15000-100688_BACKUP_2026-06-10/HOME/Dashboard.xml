@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DashboardConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Groups />
+  <Dashboards />
+  <Cards>
+    <Card id="/DEVICES/HW_DEVICES/MAIN_COMPUTER/MAIN_COMPUTER_CPU/PROPERTY_MC_MODULE_TEMPERATURE">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/MAIN_COMPUTER/MAIN_COMPUTER_CPU/PROPERTY_MC_MODULE_TEMPERATURE</Url>
+        <Title>Temperatur</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/MAIN_COMPUTER/MAIN_COMPUTER_CPU/PROPERTY_MC_MODULE_TEMPERATURE</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>°C</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/MAIN_COMPUTER/MAIN_COMPUTER_FAN/PROPERTY_MC_FAN_SPEED">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/MAIN_COMPUTER/MAIN_COMPUTER_FAN/PROPERTY_MC_FAN_SPEED</Url>
+        <Title>Lüftergeschwindigkeit</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/MAIN_COMPUTER/MAIN_COMPUTER_FAN/PROPERTY_MC_FAN_SPEED</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>U/min</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_SERVICE_INT_R1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_SERVICE_INT_R1</Url>
+        <Title>Wartungsintervall (Prod.zeit)</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_SERVICE_INT_R1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>Stunde</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_CALTIME_SERVICE_INT_R1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_CALTIME_SERVICE_INT_R1</Url>
+        <Title>Wartungsintervall (Kal.zeit)</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_CALTIME_SERVICE_INT_R1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>Jahr</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_W_LEVEL_R1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_W_LEVEL_R1</Url>
+        <Title>Schwelle Wartungswarnung (Prod.zeit)</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_W_LEVEL_R1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>%</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_CALTIME_W_LEVEL_R1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_CALTIME_W_LEVEL_R1</Url>
+        <Title>Schwelle Wartungswarnung (Kal.zeit)</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_CALTIME_W_LEVEL_R1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>%</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_GEAR_W_LEVEL_R1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_GEAR_W_LEVEL_R1</Url>
+        <Title>Schwelle Wartungswarnung (gesch. Gebrauchsdauer)</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_GEAR_W_LEVEL_R1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>%</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_RESTART_TIME_R1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_RESTART_TIME_R1</Url>
+        <Title>Zeitpunkt Inbetriebnahme (seit 1970)</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_RESTART_TIME_R1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>Tage</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_ELAPSED_TIME_R1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_ELAPSED_TIME_R1</Url>
+        <Title>Kal.zeit seit letzter Wartung</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_ELAPSED_TIME_R1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>Tage</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_R1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_R1</Url>
+        <Title>Betriebsstundenzähler</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_R1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>Stunde</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_COUNT_R1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_COUNT_R1</Url>
+        <Title>Prod.zeit seit letzter Wartung</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA/PROPERTY_PRODTIME_COUNT_R1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>Stunde</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA_J1/PROPERTY_L10_H_R1_J1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA_J1/PROPERTY_L10_H_R1_J1</Url>
+        <Title>Geschätztes Wartungsintervall Getriebe</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA_J1/PROPERTY_L10_H_R1_J1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>Stunde</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA_J1/PROPERTY_L10_H_COUNT_R1_J1">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA_J1/PROPERTY_L10_H_COUNT_R1_J1</Url>
+        <Title>Prod.zeit seit letzter Getriebewartung</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/HW_DEVICES/ROB1/ROB1_SIS_DATA_J1/PROPERTY_L10_H_COUNT_R1_J1</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>Stunde</SystemUnit>
+      </Value>
+    </Card>
+    <Card id="/DEVICES/SW_RESOURCES/SYSTEM/SYSTEM_INFO/PROPERTY_SYSTEM_UPTIME">
+      <type>System</type>
+      <Label>
+        <Url>/DEVICES/SW_RESOURCES/SYSTEM/SYSTEM_INFO/PROPERTY_SYSTEM_UPTIME</Url>
+        <Title>Betriebszeit</Title>
+      </Label>
+      <Value>
+        <Url>/DEVICES/SW_RESOURCES/SYSTEM/SYSTEM_INFO/PROPERTY_SYSTEM_UPTIME</Url>
+        <ValueType>System</ValueType>
+        <Unit />
+        <SystemUnit>hh:mm:ss</SystemUnit>
+      </Value>
+    </Card>
+  </Cards>
+</DashboardConfiguration>

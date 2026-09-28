@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<Program>
+	<Module>RRC_User.modx</Module>
+	<Module>HSLU_Saw.modx</Module>
+	<Module>HSLU_Tools.modx</Module>
+	<Module>RRC_Main.modx</Module>
+	<Module>HSLU_EAx.modx</Module>
+	<Module>HSLU_ZimmerGripper.modx</Module>
+	<Module>HSLU_PLC1.modx</Module>
+	<Module>HSLU_Workobject.modx</Module>
+	<Module>Wizard_LoadData.modx</Module>
+	<Module>HSLU_Data.modx</Module>
+	<Module>Gudel_HSLU_CobotMover.modx</Module>
+</Program>

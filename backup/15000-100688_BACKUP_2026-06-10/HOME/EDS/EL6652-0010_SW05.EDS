@@ -1,0 +1,316 @@
+[File]
+        DescText = "Generic EDS-File for EL6652-0010";
+        CreateDate = 09-24-2024;
+        CreateTime = 18:11:12;
+        ModDate = 10-15-2024;
+        ModTime = 14:17:43;
+        Revision = 1.7;
+        HomeURL = "http://www.beckhoff.com";
+
+[Device]
+        VendCode = 108;
+        VendName = "Beckhoff Automation GmbH & Co. KG";
+        ProdType = 12;
+        ProdTypeStr = "Communications Adapter";
+        ProdCode = 6652;
+        MajRev = 5;
+        MinRev = 62;
+        ProdName = "EL6652-0010";
+        Icon = "EL6652-0010.ico";
+        IconContents =
+                "AAABAAEARigAAAEAGAAoIwAAFgAAACgAAABGAAAAUAAAAAEAGAAAAAAAAAAA"
+                "AGAAAABgAAAAAAAAAAAAAAD/////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//8AAP//////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/////4CAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgP//"
+                "/////////////////////////////////////////////wAA////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////gICAwMDAwMDA"
+                "wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAgICA////////////////////"
+                "////////////////////////////AAD/////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////////////////////////+AgIDAwMDAwMDAwMDAwMDAwMDAwMDA"
+                "wMDAwMDAwMDAwMDAwMCAgID/////////////////////////////////////"
+                "//////////8AAP//////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/////////////4CAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA"
+                "wICAgP///////////////////////////////////////////////wAA////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////gICA"
+                "wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAgICA////////////"
+                "////////////////////////////////////AAD/////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////////////////////////////////+AgIDAwMDAwMCAgICAgICA"
+                "gICAgICAgICAgICAgIDAwMDAwMCAgID/////////////////////////////"
+                "//////////////////8AAP//////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/////////////////////4CAgMDAwMDAwICAgAAAAAAAAAAAAAAAAAAAAICA"
+                "gMDAwMDAwICAgP//////////////////////////////////////////////"
+                "/wAA////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////gICAwMDAwMDAgICAAAAAAAAAAAAAAAAAAAAAgICAwMDAwMDAgICA////"
+                "////////////////////////////////////////////AAD/////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////////////////////////////////////////+AgIDAwMDAwMCA"
+                "gIAAAAAAAAAAAAAAAAAAAAAAAADAwMDAwMCAgID/////////////////////"
+                "//////////////////////////8AAP//////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/////////////////////////////4CAgMDAwMDAwICAgAAAAAAAAAAAAAAA"
+                "AAAAAAAAAMDAwMDAwICAgP//////////////////////////////////////"
+                "/////////wAA////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////gICAwMDAwMDAgICAAAAAAAAAAAAAAAAAAAAAgICAwMDAwMDA"
+                "gICA////////////////////////////////////////////////AAD/////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////////////////////////////////////////////////+AgIDA"
+                "wMDAwMCAgIAAAAAAAAAAAAAAAAAAAAAA/wDAwMDAwMCAgID/////////////"
+                "//////////////////////////////////8AAP//////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/////////////////////////////////////4CAgMDAwMDAwICAgICAgICA"
+                "gICAgICAgICAgICAgMDAwMDAwICAgP//////////////////////////////"
+                "/////////////////wAA////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////gICAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA"
+                "wMDAwMDAgICA////////////////////////////////////////////////"
+                "AAD/////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//+AgIDAwMDAwMCAgICAgICAgICAgICAgICAgICAgIDAwMDAwMCAgID/////"
+                "//////////////////////////////////////////8AAP//////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/////////////////////////////////////////////4CAgMDAwMDAwICA"
+                "gAAAAAAAAAAAAAAAAAAAAICAgMDAwMDAwICAgP//////////////////////"
+                "/////////////////////////wAA////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////gICAwMDAwMDAgICAAAAAAAAAAAAAAAAA"
+                "AAAAgICAwMDAwMDAgICA////////////////////////////////////////"
+                "////////AAD/////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////+AgIDAwMDAwMCAgIAAAAAAAAAAAAAAAAAAAAAAAADAwMDAwMCA"
+                "gID///////////////////////////////////////////////8AAP//////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/////////////////////////////////////////////////////4CAgMDA"
+                "wMDAwICAgAAAAAAAAAAAAAAAAAAAAAAAAMDAwMDAwICAgP//////////////"
+                "/////////////////////////////////wAA////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////gICAwMDAwMDAgICAAAAAAAAA"
+                "AAAAAAAAAAAAgICAwMDAwMDAgICA////////////////////////////////"
+                "////////////////AAD/////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////////////+AgIDAwMDAwMCAgIAAAAAAAAAAAAAAAAAAAAAA/wDA"
+                "wMDAwMCAgID///////////////////////////////////////////////8A"
+                "AP//////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/4CAgMDAwMDAwICAgICAgICAgICAgICAgICAgICAgMDAwMDAwICAgP//////"
+                "/////////////////////////////////////////wAA////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////gICAwMDAwMDAwMDA"
+                "wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAgICA////////////////////////"
+                "////////////////////////AAD/////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////////////////////+AgIDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA"
+                "wMDAwMDAwMDAwMCAgID/////////////////////////////////////////"
+                "//////8AAP//////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/////////4CAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwICA"
+                "gP///////////////////////////////////////////////wAA////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////gICAwMDA"
+                "wMDAwMDAAAD/AAD/wMDAwMDAwMDAwMDAwMDAwMDAgICA////////////////"
+                "////////////////////////////////AAD/////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////8AAAD/////////////////////////////////////////////"
+                "//////////////////////////////////+AgIDAwMDAwMDAwMAAAP8AAP/A"
+                "wMDAwMDAwMDAwMDAwMDAwMCAgID/////////////////////////////////"
+                "//////////////8AAP//////////////////////////////////////////"
+                "/////////////////////////////////////////////////wAAAAAAAP//"
+                "////////////////////////////////////////////////////////////"
+                "/////////////////4CAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA"
+                "wMDAwICAgP///////////////////////////////////////////////wAA"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////////////////"
+                "gICAwMDAwMDAwMDAAP8AAP8AwMDAwMDAwMDAwMDAwMDAwMDAgICA////////"
+                "////////////////////////////////////////AAD/////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAD///////////////////////+AgIDAwMDAwMDAwMAA"
+                "/wAA/wDAwMDAwMDAwMDAwMDAwMDAwMCAgID/////////////////////////"
+                "//////////////////////8AAP//////////////////////////////////"
+                "/////////////////////////////////////////////wAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AP///////////////////////4CAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA"
+                "wMDAwMDAwMDAwICAgP//////////////////////////////////////////"
+                "/////wAA////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////gICAwMDAwMDAwMDAAP8AAP8AwMDAwMDAwMDAwMDAwMDAwMDAgICA"
+                "////////////////////////////////////////////////AAD/////////"
+                "//8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8A"
+                "AP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8AAP8A"
+                "AP8AAP8AAP8AAP8AAP8AAP8AAP////////////////////////+AgIDAwMDA"
+                "wMDAwMAA/wAA/wDAwMDAwMDAwMDAwMDAwMDAwMCAgID/////////////////"
+                "//////////////////////////////8AAP///////////wAA/wAA/wAA/wAA"
+                "/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA"
+                "/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA/wAA"
+                "/wAA/////////////////////////////4CAgMDAwMDAwMDAwMDAwMDAwMDA"
+                "wMDAwMDAwMDAwMDAwMDAwICAgP//////////////////////////////////"
+                "/////////////wAA////////////AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/"
+                "AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/"
+                "AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/AAD/////////////////"
+                "////////////////gICAwMDAwMDAwMDAwMDAwMDA////////////////////"
+                "wMDAgICA////////////////////////////////////////////////AAD/"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////////8AAP8AAP////////////////////////////////////+A"
+                "gIDAwMDAwMDAwMDAwMDAwMD////////////////////AwMCAgID/////////"
+                "//////////////////////////////////////8AAP//////////////////"
+                "////////////////////////////////////////////////////////////"
+                "/////////////////////////////////////////////////////////wAA"
+                "/////////////////////////////////////////4CAgMDAwMDAwMDAwMDA"
+                "wMDAwMDAwMDAwMDAwMDAwMDAwMDAwICAgP//////////////////////////"
+                "/////////////////////wAA////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////gICAgICAgICAgICAgICAgICAgICAgICAgICA"
+                "gICAgICAgICAgICA////////////////////////////////////////////"
+                "////AAD/////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "////////////////////////////////////////////////////////////"
+                "//////////////////////////////////////////////8AAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+
+[Device Classification]
+    Class1 = EtherNetIP;
+
+[Params]
+    Param1 = 0,,,0x0800,0xC8,4,"Output CycleTime/RPI (O->T)","","Output CycleTime/RPI (O->T)",1000,3200000,10000,,,,,,,,,;
+    Param2 = 0,,,0x0800,0xC8,4,"Input CycleTime/RPI (T->O)","","Input CycleTime/RPI (T->O)",1000,3200000,10000,,,,,,,,,;
+    Param3 = 0,,,0x0800,0xC7,2,"Output Size (O->T)","","Output Size (O->T)",4,502,4,,,,,,,,,;
+    Param4 = 0,,,0x0800,0xC7,2,"Input Size (T->O)","","Input Size (T->O)",4,502,4,,,,,,,,,;
+    Param5 = 0,,,0x0A00,0xD1,1,"Input Data (T->O)","","Input Data (T->O)",,,0,,,,,,,,,;
+    Param6 = 0,,,0x0A00,0xD1,1,"Output Data (O->T)","","Output Data (O->T)",,,0,,,,,,,,,;
+
+[Assembly]
+    Object_Name = "Assembly Object";
+    Object_Class_Code = 0x04;
+    Assem129 =
+         "Input Data(T->O)",
+         "20 04 24 81 30 03",
+         502,
+         0x0001,
+         ,,
+         4016,Param5;                                                 $ Input Data (T->O)
+
+    Assem130 =
+         "Output Data(O->T)",
+         "20 04 24 82 30 03",
+         502,
+         0x0001,
+         ,,
+         4016,Param6;                                                 $ Output Data (O->T)
+
+[Connection Manager]
+    Object_Name = "Connection Manager Object";
+    Object_Class_Code = 0x06;
+    Connection1 =
+         0x84010002,                                                  $ Trigger and transport: class 1, cyclic, exclusive owner
+         0x44640405,                                                  $ Connection: unicast both ways or mcast T=>O, scheduled
+         Param1,Param3,Assem130,                                      $ O->T RPI, size, format
+         Param2,Param4,Assem129,                                      $ T->O RPI, size, format
+         ,,                                                           $ config1
+         ,,                                                           $ config2
+         "Inputs and Outputs (Exclusive Owner)",                      $ Connection Name
+         "Inputs and Outputs (Exclusive Owner)",                      $ help string
+         "20 04 24 80 2C 82 2C 81";                                   $ Path
+
+    Connection2 =
+         0x82010002,                                                  $ Trigger and transport: class 1, cyclic, input only
+         0x44640305,                                                  $ Connection: unicast/mcast, heartbeat, scheduled
+         Param1,0,,                                                   $ O->T RPI, size, format
+         Param2,Param4,Assem129,                                      $ T->O RPI, size, format
+         ,,                                                           $ config1
+         ,,                                                           $ config2
+         "Inputs (Input Only)",                                       $ Connection Name
+         "Inputs (Input Only)",                                       $ help string
+         "20 04 24 80 2C 89 2C 81";                                   $ Path
+
+    Connection3 =
+         0x81010002,                                                  $ Trigger and transport: class 1, cyclic, listen only
+         0x44640305,                                                  $ Connection: unicast/mcast, heartbeat, scheduled
+         Param1,0,,                                                   $ O->T RPI, size, format
+         Param2,Param4,Assem129,                                      $ T->O RPI, size, format
+         ,,                                                           $ config1
+         ,,                                                           $ config2
+         "Inputs (Listen Only)",                                      $ Connection Name
+         "Inputs (Listen Only)",                                      $ help string
+         "20 04 24 80 2C 88 2C 81";                                   $ Path
+
+[Capacity]
+    MaxCIPConnections = 8;
+    MaxConsumersPerMcast = 8;
+    TSpec1 = TxRx, 4, 1000;
+    TSpec2 = TxRx, 500, 1000;
+
+[TCP/IP Interface Class]
+    Object_Name = "TCP / IP Interface Object";
+    Object_Class_Code = 0xF5;
+    Revision = 3;
+    MaxInst = 1;
+    Number_Of_Static_Instances = 1;
+    Max_Number_Of_Dynamic_Instances = 0;
+
+[Ethernet Link Class]
+    Object_Name = "Ethernet Link Object";
+    Object_Class_Code = 0xF6;
+    Revision = 3;
+    MaxInst = 3;
+    Number_Of_Static_Instances = 3;
+    Max_Number_Of_Dynamic_Instances = 0;
+    InterfaceLabel1 = "Port1 (X1)";
+    InterfaceLabel2 = "Port2 (X2)";
+    InterfaceLabel3 = "Internal";
+    InterfaceType1 = 2;
+    InterfaceType2 = 2;
+    InterfaceType3 = 1;
+

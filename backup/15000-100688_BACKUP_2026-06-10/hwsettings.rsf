@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<ProductSettings version="1.0">
+  <SerialNumber>15000-100688</SerialNumber>
+  <Signature>xClt1q1OQGiMrGVUle1w3KEBNjg=</Signature>
+  <Products>
+    <Product name="RobotOS" version="10.0.1+456" id="abb.robotics.robotos">
+      <Settings />
+    </Product>
+    <Product name="RobotWareInstallationUtilities" version="1.12.0+123" id="abb.robotics.robotwareinstaller">
+      <Settings />
+    </Product>
+    <Product name="RobotControl" version="7.12.0+1369" id="abb.robotics.robotcontrol">
+      <Settings>
+        <Setting id="abb.robotics.robotcontrol.controllerhw.axiscomputer.none" displayName="System without axis computer" robot="1" />
+        <Setting id="abb.robotics.robotcontrol.controllerhw.m28.01" displayName="Main computer M28.01" robot="1" />
+        <Setting id="abb.robotics.robotcontrol.controller.encapsulation.desktop" displayName="3001-2 Desktop Controller Encapsulation" robot="1" />
+        <Setting id="abb.robotics.robotcontrol.controllerhw.variant.c30" displayName="C30" robot="1" />
+        <Setting id="abb.robotics.robotcontrol.controllerhw.varianttype.c30.typea" displayName="C30 Type A" robot="1" />
+        <Setting id="abb.robotics.robotcontrol.controllerhw.drivesystem.d10" displayName="D10 (for CRB 15000)" robot="1" />
+      </Settings>
+    </Product>
+    <Product name="OmniCoreController" version="1.0.0" id="abb.robotics.controller">
+      <Settings>
+        <Setting id="abb.robotics.controller.variant.c30" displayName="OmniCore C30" robot="1" />
+        <Setting id="abb.robotics.controller.axiscomputer.none" displayName="System without axis computer" robot="1" />
+      </Settings>
+    </Product>
+  </Products>
+</ProductSettings>

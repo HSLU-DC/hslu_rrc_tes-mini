@@ -1,0 +1,131 @@
+Tool:	elog
+Version:	2.0
+Date:	2025-11-29 15:49:32
+System Name:	/user
+RobotWare:	7.19.3
+RobotControl:	7.19.3
+Controller Name:	15000-100688
+Controller Id:	15000-100688
+
+
+
+Common log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+39        	I		Common              	170001  	<title>   	2025-11-29 15:49:31:534735	<description>	
+38        	E		Common              	12134   	<title>   	2025-11-29 15:49:22:126483	<description>	{args: "1", "-84", "248"}
+37        	E		Common              	80001   	<title>   	2025-11-29 15:49:22:124275	<description>	{args: "EtherNet/IP Duplicate Address Configured", "Device <abb_scalable_io> has got same address 192.168.125.100 as another device", "", "", ""}
+36        	I		Common              	10250   	<title>   	2025-11-29 15:49:19:547237	<description>	{args: "0", "NativeUser"}
+35        	I		Common              	10125   	<title>   	2025-11-29 15:49:18:451087	<description>	{args: "2", "T_ROB1", "5"}
+34        	I		Common              	10126   	<title>   	2025-11-29 15:49:17:795950	<description>	{args: "2", "T_ROB1", "6"}
+33        	I		Common              	36505   	<title>   	2025-11-29 15:49:17:795431	<description>	{args: "3G"}
+32        	I		Common              	10150   	<title>   	2025-11-29 15:49:17:637100	<description>	{args: "3", "T_GOFA_LED"}
+31        	I		Common              	10129   	<title>   	2025-11-29 15:49:17:636695	<description>	{args: "3", "T_GOFA_LED", "9"}
+30        	W		Common              	40210   	<title>   	2025-11-29 15:49:17:632421	<description>	{args: "T_GOFA_LED"}
+29        	I		Common              	10020   	<title>   	2025-11-29 15:49:17:632038	<description>	{args: "2", "T_ROB1"}
+28        	E		Common              	40228   	<title>   	2025-11-29 15:49:17:631960	<description>	{args: "T_ROB1", "41555"}
+27        	E		Common              	41555   	<title>   	2025-11-29 15:49:17:631885	<description>	{args: "T_ROB1", "Glue_Device_RCS_170343258110_1", "/Robatech/PowerOnRobatech/Set/154", "ERR_NORUNUNIT"}
+26        	W		Common              	41555   	<title>   	2025-11-29 15:49:17:631553	<description>	{args: "T_ROB1", "Glue_Device_RCS_170343258110_1", "/Robatech/PowerOnRobatech/Set/154", "ERR_NORUNUNIT"}
+25        	I		Common              	10002   	<title>   	2025-11-29 15:49:17:620114	<description>	{args: "2", "0", "T_ROB1"}
+24        	I		Common              	10150   	<title>   	2025-11-29 15:49:17:618796	<description>	{args: "3", "T_GOFA_LED"}
+23        	I		Common              	10150   	<title>   	2025-11-29 15:49:17:618643	<description>	{args: "2", "T_ROB1"}
+22        	I		Common              	10015   	<title>   	2025-11-29 15:49:17:585270	<description>	
+21        	I		Common              	10012   	<title>   	2025-11-29 15:49:17:584874	<description>	
+20        	W		Common              	90543   	<title>   	2025-11-29 15:49:17:424425	<description>	{args: "1"}
+19        	E		Common              	90504   	<title>   	2025-11-29 15:49:17:424363	<description>	{args: "1"}
+18        	I		Common              	10040   	<title>   	2025-11-29 15:49:14:470862	<description>	{args: "T_ROB1", "", "91444384", "2856"}
+17        	I		Common              	91038   	<title>   	2025-11-29 15:49:13:702842	<description>	{args: "1", "6"}
+16        	I		Common              	91038   	<title>   	2025-11-29 15:49:13:610941	<description>	{args: "1", "5"}
+15        	I		Common              	10002   	<title>   	2025-11-29 15:49:13:544420	<description>	{args: "3", "0", "T_GOFA_LED"}
+14        	I		Common              	91038   	<title>   	2025-11-29 15:49:13:524333	<description>	{args: "1", "4"}
+13        	I		Common              	10002   	<title>   	2025-11-29 15:49:13:466363	<description>	{args: "2", "0", "T_ROB1"}
+12        	I		Common              	10002   	<title>   	2025-11-29 15:49:13:433315	<description>	{args: "1", "0", "SC_CBC"}
+11        	I		Common              	91038   	<title>   	2025-11-29 15:49:13:431850	<description>	{args: "1", "3"}
+10        	I		Common              	91038   	<title>   	2025-11-29 15:49:13:343881	<description>	{args: "1", "2"}
+9         	I		Common              	91038   	<title>   	2025-11-29 15:49:13:275342	<description>	{args: "1", "1"}
+8         	E		Common              	71367   	<title>   	2025-11-29 15:49:12:805513	<description>	{args: "Glue_Device_RCS_170343258110_1", "192.168.125.10", "EtherNetIP"}
+7         	E		Common              	71367   	<title>   	2025-11-29 15:49:12:805416	<description>	{args: "ABB_Scalable_IO", "192.168.125.100", "EtherNetIP"}
+6         	I		Common              	10045   	<title>   	2025-11-29 15:48:41:162279	<description>	
+5         	I		Common              	10056   	<title>   	2025-11-29 15:47:55:167866	<description>	
+4         	I		Common              	10045   	<title>   	2025-11-29 15:47:31:114013	<description>	
+3         	I		Common              	10056   	<title>   	2025-11-29 15:39:26:840698	<description>	
+2         	I		Common              	10046   	<title>   	2025-11-29 15:39:05:654012	<description>	
+1         	I		Common              	10452   	<title>   	2025-11-29 15:39:05:653972	<description>	
+
+Operational log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+38        	E		Operational         	12134   	<title>   	2025-11-29 15:49:22:126483	<description>	{args: "1", "-84", "248"}
+36        	I		Operational         	10250   	<title>   	2025-11-29 15:49:19:547237	<description>	{args: "0", "NativeUser"}
+35        	I		Operational         	10125   	<title>   	2025-11-29 15:49:18:451087	<description>	{args: "2", "T_ROB1", "5"}
+34        	I		Operational         	10126   	<title>   	2025-11-29 15:49:17:795950	<description>	{args: "2", "T_ROB1", "6"}
+32        	I		Operational         	10150   	<title>   	2025-11-29 15:49:17:637100	<description>	{args: "3", "T_GOFA_LED"}
+31        	I		Operational         	10129   	<title>   	2025-11-29 15:49:17:636695	<description>	{args: "3", "T_GOFA_LED", "9"}
+29        	I		Operational         	10020   	<title>   	2025-11-29 15:49:17:632038	<description>	{args: "2", "T_ROB1"}
+25        	I		Operational         	10002   	<title>   	2025-11-29 15:49:17:620114	<description>	{args: "2", "0", "T_ROB1"}
+24        	I		Operational         	10150   	<title>   	2025-11-29 15:49:17:618796	<description>	{args: "3", "T_GOFA_LED"}
+23        	I		Operational         	10150   	<title>   	2025-11-29 15:49:17:618643	<description>	{args: "2", "T_ROB1"}
+22        	I		Operational         	10015   	<title>   	2025-11-29 15:49:17:585270	<description>	
+21        	I		Operational         	10012   	<title>   	2025-11-29 15:49:17:584874	<description>	
+18        	I		Operational         	10040   	<title>   	2025-11-29 15:49:14:470862	<description>	{args: "T_ROB1", "", "91444384", "2856"}
+15        	I		Operational         	10002   	<title>   	2025-11-29 15:49:13:544420	<description>	{args: "3", "0", "T_GOFA_LED"}
+13        	I		Operational         	10002   	<title>   	2025-11-29 15:49:13:466363	<description>	{args: "2", "0", "T_ROB1"}
+12        	I		Operational         	10002   	<title>   	2025-11-29 15:49:13:433315	<description>	{args: "1", "0", "SC_CBC"}
+6         	I		Operational         	10045   	<title>   	2025-11-29 15:48:41:162279	<description>	
+5         	I		Operational         	10056   	<title>   	2025-11-29 15:47:55:167866	<description>	
+4         	I		Operational         	10045   	<title>   	2025-11-29 15:47:31:114013	<description>	
+3         	I		Operational         	10056   	<title>   	2025-11-29 15:39:26:840698	<description>	
+2         	I		Operational         	10046   	<title>   	2025-11-29 15:39:05:654012	<description>	
+1         	I		Operational         	10452   	<title>   	2025-11-29 15:39:05:653972	<description>	
+
+System log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+
+Hardware log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+33        	I		Hardware            	36505   	<title>   	2025-11-29 15:49:17:795431	<description>	{args: "3G"}
+
+Program log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+30        	W		Program             	40210   	<title>   	2025-11-29 15:49:17:632421	<description>	{args: "T_GOFA_LED"}
+28        	E		Program             	40228   	<title>   	2025-11-29 15:49:17:631960	<description>	{args: "T_ROB1", "41555"}
+27        	E		Program             	41555   	<title>   	2025-11-29 15:49:17:631885	<description>	{args: "T_ROB1", "Glue_Device_RCS_170343258110_1", "/Robatech/PowerOnRobatech/Set/154", "ERR_NORUNUNIT"}
+26        	W		Program             	41555   	<title>   	2025-11-29 15:49:17:631553	<description>	{args: "T_ROB1", "Glue_Device_RCS_170343258110_1", "/Robatech/PowerOnRobatech/Set/154", "ERR_NORUNUNIT"}
+
+Motion log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+
+Communication log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+8         	E		Communication       	71367   	<title>   	2025-11-29 15:49:12:805513	<description>	{args: "Glue_Device_RCS_170343258110_1", "192.168.125.10", "EtherNetIP"}
+7         	E		Communication       	71367   	<title>   	2025-11-29 15:49:12:805416	<description>	{args: "ABB_Scalable_IO", "192.168.125.100", "EtherNetIP"}
+
+UserDef log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+37        	E		UserDef             	80001   	<title>   	2025-11-29 15:49:22:124275	<description>	{args: "EtherNet/IP Duplicate Address Configured", "Device <abb_scalable_io> has got same address 192.168.125.100 as another device", "", "", ""}
+
+Safety log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+20        	W		Safety              	90543   	<title>   	2025-11-29 15:49:17:424425	<description>	{args: "1"}
+19        	E		Safety              	90504   	<title>   	2025-11-29 15:49:17:424363	<description>	{args: "1"}
+17        	I		Safety              	91038   	<title>   	2025-11-29 15:49:13:702842	<description>	{args: "1", "6"}
+16        	I		Safety              	91038   	<title>   	2025-11-29 15:49:13:610941	<description>	{args: "1", "5"}
+14        	I		Safety              	91038   	<title>   	2025-11-29 15:49:13:524333	<description>	{args: "1", "4"}
+11        	I		Safety              	91038   	<title>   	2025-11-29 15:49:13:431850	<description>	{args: "1", "3"}
+10        	I		Safety              	91038   	<title>   	2025-11-29 15:49:13:343881	<description>	{args: "1", "2"}
+9         	I		Safety              	91038   	<title>   	2025-11-29 15:49:13:275342	<description>	{args: "1", "1"}
+
+Internal log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+40        	E		Internal            	100000  	<title>   	2025-11-29 15:49:32:134667	<description>	{args: "MC0: root.cc 2326 restore unpack failed -84"}
+
+Process log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+
+Configuration log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+
+RAPID log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+
+RemoteService log messages
+SeqNo     	Type	Category            	Code    	Title     	Date                		Description		Arguments	
+39        	I		RemoteService       	170001  	<title>   	2025-11-29 15:49:31:534735	<description>	

@@ -1,0 +1,9 @@
+MODULE GOFA_ASI_Procedures(SYSMODULE)
+    PROC ASI_Routine1()
+        r_HSLU_GripperOpen;
+    ENDPROC
+
+    PROC ASI_Routine2()
+        r_HSLU_GripperClose;
+    ENDPROC
+ENDMODULE

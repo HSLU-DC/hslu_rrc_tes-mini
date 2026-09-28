@@ -1,0 +1,85 @@
+MODULE HSLU_CI_SoftAct
+        !************************************************
+    ! Function    :     RRC Custom Instruction SoftAct
+    ! Programmer  :     HSLU
+    ! Date        :     2025.01
+    ! Description :     Activates soft servo on a specific axis.
+    !                   Makes the axis compliant without affecting
+    !                   Cartesian positioning accuracy.
+    !
+    ! Parameters from Python:
+    !   St1:    Axis number (1-6)
+    !   V1:     Softness percentage (0-100%)
+    !
+    ! Usage: For pressing operations where only one axis
+    !        should be compliant (e.g., axis 6 for rotation)
+    !***************** HSLU *************************
+    !
+    PROC r_RRC_CI_SoftAct()
+        VAR num nAxis;
+        VAR num nSoftness;
+        VAR bool bOk;
+        !
+        ! Read axis number from St1
+        bOk := StrToVal(bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.St1, nAxis);
+        !
+        ! Read softness from V1
+        nSoftness := bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.V1;
+        !
+        ! Activate soft servo on specified axis
+        SoftAct nAxis, nSoftness;
+        !
+        ! User information
+        ErrWrite\I, "RRC_CI_SoftAct", "Axis="+NumToStr(nAxis,0)+" Softness="+NumToStr(nSoftness,0)+"%";
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                r_RRC_FDone;
+            DEFAULT:
+                r_RRC_FError;
+            ENDTEST
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN;
+    ERROR
+        ErrWrite\W, "RRC_CI_SoftAct Error", "Axis="+NumToStr(nAxis,0);
+        TRYNEXT;
+    ENDPROC
+
+    !************************************************
+    ! Function    :     RRC Custom Instruction SoftDeact
+    ! Programmer  :     HSLU
+    ! Date        :     2025.01
+    ! Description :     Deactivates soft servo on all axes.
+    !
+    ! Parameters from Python:
+    !   None
+    !***************** HSLU *************************
+    !
+    PROC r_RRC_CI_SoftDeact()
+        !
+        ! Deactivate soft servo
+        SoftDeact;
+        !
+        ! User information
+        ErrWrite\I, "RRC_CI_SoftDeact", "Soft servo deactivated";
+        !
+        ! Feedback
+        IF bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev>0 THEN
+            TEST bm_RRC_RecBufferRob{n_RRC_ChaNr,n_RRC_ReadPtrRecBuf}.Data.F_Lev
+            CASE 1:
+                r_RRC_FDone;
+            DEFAULT:
+                r_RRC_FError;
+            ENDTEST
+            r_RRC_MovMsgToSenBufRob n_RRC_ChaNr;
+        ENDIF
+        RETURN;
+    ERROR
+        ErrWrite\W, "RRC_CI_SoftDeact Error", "";
+        TRYNEXT;
+    ENDPROC
+
+ENDMODULE
